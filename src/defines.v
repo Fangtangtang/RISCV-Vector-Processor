@@ -27,6 +27,8 @@
 `define     ICACHE_NOP          2'b00
 `define     ICACHE_WORKING      2'b01
 `define     IF_FINISHED         2'b10
+`define     ICACHE_RESTING      2'b11
+
 
 
 // DATA CACHE

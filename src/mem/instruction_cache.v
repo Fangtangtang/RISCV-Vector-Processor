@@ -2,6 +2,7 @@
 // INSTRUCTION CACHE
 // 
 // - cache size = 2，暂时仅作为memory controller
+// - inst_fetch_enable能中断flash
 // #############################################################################################################################
 `include"src/defines.v"
 
@@ -30,21 +31,27 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
     assign instruction = _instruction;
     
     reg _hit;
-    reg [INDEX_SIZE-1:0] _current_index; // 当前地址对应的entry下标
-    reg [ADDR_WIDTH-1:0] _current_addr;
+    reg _flash;
+    reg [INDEX_SIZE-1:0] _current_index = 0; // 当前地址对应的entry下标
+    reg [ADDR_WIDTH-1:0] _requested_addr;
+    reg [ADDR_WIDTH-1:0] _current_addr = 0;
+    
     assign mem_vis_addr = _current_addr;
     
     
     always @(posedge clk) begin
         case (CNT)
             2:begin
+                // 处理真取指令请求
                 if (_hit) begin
                     CNT               <= 0;
                     inst_fetch_status <= `IF_FINISHED;
                     _hit = `FALSE;
                 end
                 else begin
-                    inst_address[0] <= _current_addr;
+                    inst_address[0] <= _requested_addr;
+                    _current_addr   <= _requested_addr;
+                    _current_index  <= 0;
                     case (mem_status)
                         // 可以访存
                         `MEM_RESTING:begin
@@ -60,18 +67,62 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                         $display("[ERROR]:unexpected mem_status when cnt == 2 in instruction cache\n");
                     endcase
                 end
+                // 处理flash
+                if (_flash) begin
+                    if (inst_fetch_enabled) begin
+                        CNT    <= 0;
+                        _flash <= `FALSE;
+                    end
+                    else begin
+                        case (mem_status)
+                            // 可以访存
+                            `MEM_RESTING:begin
+                                CNT               <= 1;
+                                inst_fetch_status <= `ICACHE_WORKING;
+                            end
+                            // 加stall
+                            `MEM_WORKING:begin
+                                CNT               <= 2;
+                                inst_fetch_status <= `ICACHE_NOP;
+                            end
+                            default:
+                            $display("[ERROR]:unexpected mem_status when cnt == 2 in instruction cache\n");
+                        endcase
+                    end
+                end
             end
             1:begin
-                CNT               <= 0;
-                inst_fetch_status <= `IF_FINISHED;
-                inst[0]           <= mem_data;
-                _instruction      <= mem_data;
+                // 取指令
+                if (!_flash) begin
+                    _instruction      <= mem_data;
+                    CNT               <= 2;
+                    inst_fetch_status <= `IF_FINISHED;
+                    _flash            <= `TRUE;
+                end
+                // flash
+                inst[_current_index] <= mem_data;
+                // flash结束
+                if (_current_index == ICACHE_SIZE-1) begin
+                    CNT               <= 0;
+                    inst_fetch_status <= `ICACHE_RESTING;
+                    _flash            <= `FALSE;
+                end
+                // 继续flash
+                else begin
+                    inst_address[_current_index+1] <= _current_addr+4;
+                    _current_index                 <= _current_index+1;
+                    _current_addr                  <= _current_addr+4;
+                    CNT                            <= 2;
+                    if (_flash) begin
+                        inst_fetch_status <= `ICACHE_WORKING;
+                    end
+                end
             end
             0:begin
-                // 真取指请求
+                // 真取指令请求
                 if (inst_fetch_enabled) begin
                     CNT               <= 2;
-                    _current_addr     <= inst_addr;
+                    _requested_addr   <= inst_addr;
                     inst_fetch_status <= `ICACHE_WORKING;
                     // 判断是否hit
                     _hit = `FALSE;
@@ -82,13 +133,11 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                         end
                     end
                 end
-                // 尝试在main memory空闲时填补cache
-                else begin
-                    // todo
-                end
             end
             default:
             $display("[ERROR]:unexpected cnt in instruction cache\n");
         endcase
     end
+
+    
 endmodule
