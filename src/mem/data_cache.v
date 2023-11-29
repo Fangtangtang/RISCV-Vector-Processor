@@ -23,7 +23,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                    output reg [1:0] mem_vis_status,
                    input [LEN-1:0] mem_data,                            // interact with main memory
                    input [1:0] mem_status,
-                   output [LEN-1:0] mem_writen_data,                    // 写入memory的数据
+                   output reg [LEN-1:0] mem_writen_data,                // 写入memory的数据
                    output [ADDR_WIDTH-1:0] mem_vis_addr,                // 访存地址
                    output reg [1:0] mem_vis_signal);
     
@@ -58,51 +58,80 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     always @(posedge clk) begin
         case (CNT)
             // 等待开始工作
-            3:begin
+            2:begin
                 if (mem_status == `MEM_WORKING) begin
-                    CNT            <= 3;
+                    CNT            <= 2;
                     mem_vis_signal <= `MEM_NOP;
                     mem_vis_status <= `D_CACHE_STALL;
                 end
                 else if (mem_status == `MEM_RESTING) begin
-                    CNT            <= 2;
+                    CNT            <= 1;
                     mem_vis_status <= `D_CACHE_WORKING;
                     case (task_type)
                         `D_CACHE_LOAD:begin
                             mem_vis_signal <= `MEM_READ_BURST; // 批量读取
                         end
                         `D_CACHE_STORE:begin
-                            mem_vis_signal <= `MEM_WRITE; // 批量写
+                            mem_vis_signal  <= `MEM_WRITE;      // 批量写
+                            mem_writen_data <= _writen_data[0]; // 第一个待写数据
                         end
                         default:
-                        $display("[ERROR]:unexpected task_type when cnt == 3 in data cache\n");
+                        $display("[ERROR]:unexpected task_type when cnt == 2 in data cache\n");
                     endcase
                 end
             end
-            // 工作中，处理mem数据
-            2:begin
-                case (task_type)
-                    `D_CACHE_LOAD:begin
-                        
-                    end
-                    `D_CACHE_STORE:begin
-                        
-                    end
-                    default:
-                    $display("[ERROR]:unexpected task_type when cnt == 2 in data cache\n");
-                endcase
-            end
-            // 工作中，再次发起访存
+            // 工作中，处理mem数据，再次发起访存
             1:begin
                 case (task_type)
                     `D_CACHE_LOAD:begin
-                        
+                        data[_current_index]  <= mem_data;
+                        valid[_current_index] <= 1;
+                        // data burst未完成
+                        if (_current_index+1 < VECTOR_SIZE) begin
+                            _current_index <= _current_index + 1;
+                            CNT            <= 1;
+                            mem_vis_signal <= `MEM_READ_BURST;
+                            // 需要的数据已经取到
+                            if (_current_index+1 == _requested_length) begin
+                                vector_data    <= _data; // todo:要不要只取length个
+                                mem_vis_status <= `L_S_FINISHED;
+                            end
+                            else begin
+                                mem_vis_status <= `D_CACHE_WORKING;
+                            end
+                        end
+                        // data burst完成
+                        else begin
+                            CNT <= 0;
+                            // 需要的数据已经取到
+                            if (_current_index+1 == _requested_length) begin
+                                vector_data    <= _data; // todo:要不要只取length个
+                                mem_vis_status <= `L_S_FINISHED;
+                            end
+                            else begin
+                                mem_vis_signal <= `MEM_NOP;
+                                mem_vis_status <= `D_CACHE_RESTING;
+                            end
+                        end
                     end
                     `D_CACHE_STORE:begin
-                        
+                        // 未结束
+                        if (_current_index+1 < VECTOR_SIZE)begin
+                            _current_index  <= _current_index + 1;
+                            mem_writen_data <= _writen_data[_current_index+1];
+                            CNT             <= 1;
+                            mem_vis_signal  <= `MEM_WRITE;
+                            mem_vis_status  <= `D_CACHE_WORKING;
+                        end
+                        // 结束
+                        else begin
+                            CNT            <= 0;
+                            mem_vis_status <= `L_S_FINISHED;
+                            mem_vis_signal <= `MEM_NOP;
+                        end
                     end
                     default:
-                    $display("[ERROR]:unexpected task_type when cnt == 2 in data cache\n");
+                    $display("[ERROR]:unexpected task_type when cnt == 1 in data cache\n");
                 endcase
             end
             // 工作完成或任务发布
@@ -125,7 +154,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                                     mem_vis_status <= `L_S_FINISHED;
                                 end
                                 else begin
-                                    CNT               <= 3;
+                                    CNT               <= 2;
                                     mem_vis_status    <= `D_CACHE_WORKING;
                                     _requested_length <= length;
                                     starting_addr     <= data_addr;
@@ -137,7 +166,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                                 end
                             end
                             `D_CACHE_STORE:begin
-                                CNT               <= 3;
+                                CNT               <= 2;
                                 mem_vis_status    <= `D_CACHE_WORKING;
                                 _requested_length <= length;
                                 starting_addr     <= data_addr;
@@ -157,11 +186,10 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                         endcase
                     end
                 end
-                // todo
                 else begin
-                    
+                    task_type      <= `D_CACHE_REST;
+                    mem_vis_status <= `D_CACHE_RESTING;
                 end
-                
             end
             default:
             $display("[ERROR]:unexpected cnt in data cache\n");
