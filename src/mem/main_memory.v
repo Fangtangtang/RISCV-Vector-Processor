@@ -28,16 +28,16 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
     assign mem_data = read_data;
     
     always @(posedge clk) begin
-        if (mem_vis_signal == `WRITE) begin
+        if (mem_vis_signal == `MEM_WRITE) begin
             storage[mem_vis_addr+3] <= writen_data[31:24];
             storage[mem_vis_addr+2] <= writen_data[23:16];
             storage[mem_vis_addr+1] <= writen_data[15:8];
             storage[mem_vis_addr]   <= writen_data[7:0];
         end
         
-            if (mem_vis_signal == `READ) begin
-                read_data <= {storage[mem_vis_addr+3],storage[mem_vis_addr+2],storage[mem_vis_addr+1],storage[mem_vis_addr]};
-            end
+        if (mem_vis_signal == `MEM_READ) begin
+            read_data <= {storage[mem_vis_addr+3],storage[mem_vis_addr+2],storage[mem_vis_addr+1],storage[mem_vis_addr]};
+        end
     end
     
 endmodule

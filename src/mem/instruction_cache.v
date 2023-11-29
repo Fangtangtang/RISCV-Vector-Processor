@@ -9,7 +9,7 @@
 module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                           parameter LEN = 32,
                           parameter BYTE_SIZE = 8,
-                          parameter ICACHE_SIZE = 2,
+                          parameter I_CACHE_SIZE = 2,
                           parameter INDEX_SIZE = 1)
                          (input wire clk,
                           input [ADDR_WIDTH-1:0] inst_addr,     // instruction fetch
@@ -19,11 +19,11 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                           input [LEN-1:0] mem_data,             // interact with main memory
                           input [1:0] mem_status,
                           output [ADDR_WIDTH-1:0] mem_vis_addr, // 访存地址
-                          output [1:0] mem_vis_signal);
+                          output reg [1:0] mem_vis_signal);
     
     // 全关联cache
-    reg [ADDR_WIDTH-1:0] inst_address [ICACHE_SIZE-1:0];
-    reg [LEN-1:0] inst [ICACHE_SIZE-1:0];
+    reg [ADDR_WIDTH-1:0] inst_address [I_CACHE_SIZE-1:0];
+    reg [LEN-1:0] inst [I_CACHE_SIZE-1:0];
     
     reg [1:0] CNT = 0;
     
@@ -38,6 +38,7 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
     
     assign mem_vis_addr = _current_addr;
     
+    reg [1:0] mem_vis_type = 0;
     
     always @(posedge clk) begin
         case (CNT)
@@ -45,7 +46,9 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                 // 处理真取指令请求
                 if (_hit) begin
                     CNT               <= 0;
+                    mem_vis_signal    <= `MEM_NOP;
                     inst_fetch_status <= `IF_FINISHED;
+                    mem_vis_type      <= `MEM_NOP;
                     _hit = `FALSE;
                 end
                 else begin
@@ -56,12 +59,14 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                         // 可以访存
                         `MEM_RESTING:begin
                             CNT               <= 1;
-                            inst_fetch_status <= `ICACHE_WORKING;
+                            mem_vis_signal    <= `MEM_READ;
+                            inst_fetch_status <= `I_CACHE_WORKING;
                         end
                         // 加stall
                         `MEM_WORKING:begin
                             CNT               <= 2;
-                            inst_fetch_status <= `ICACHE_NOP;
+                            mem_vis_signal    <= `MEM_NOP;
+                            inst_fetch_status <= `I_CACHE_STALL;
                         end
                         default:
                         $display("[ERROR]:unexpected mem_status when cnt == 2 in instruction cache\n");
@@ -78,12 +83,14 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                             // 可以访存
                             `MEM_RESTING:begin
                                 CNT               <= 1;
-                                inst_fetch_status <= `ICACHE_WORKING;
+                                mem_vis_signal    <= `MEM_READ;
+                                inst_fetch_status <= `I_CACHE_WORKING;
                             end
                             // 加stall
                             `MEM_WORKING:begin
                                 CNT               <= 2;
-                                inst_fetch_status <= `ICACHE_NOP;
+                                mem_vis_signal    <= `MEM_NOP;
+                                inst_fetch_status <= `I_CACHE_STALL;
                             end
                             default:
                             $display("[ERROR]:unexpected mem_status when cnt == 2 in instruction cache\n");
@@ -92,6 +99,7 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                 end
             end
             1:begin
+                mem_vis_signal <= `MEM_NOP;
                 // 取指令
                 if (!_flash) begin
                     _instruction      <= mem_data;
@@ -102,10 +110,11 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                 // flash
                 inst[_current_index] <= mem_data;
                 // flash结束
-                if (_current_index == ICACHE_SIZE-1) begin
+                if (_current_index == I_CACHE_SIZE-1) begin
                     CNT               <= 0;
-                    inst_fetch_status <= `ICACHE_RESTING;
+                    inst_fetch_status <= `I_CACHE_RESTING;
                     _flash            <= `FALSE;
+                    mem_vis_type      <= `MEM_NOP;
                 end
                 // 继续flash
                 else begin
@@ -114,19 +123,21 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                     _current_addr                  <= _current_addr+4;
                     CNT                            <= 2;
                     if (_flash) begin
-                        inst_fetch_status <= `ICACHE_WORKING;
+                        inst_fetch_status <= `I_CACHE_WORKING;
                     end
                 end
             end
             0:begin
+                mem_vis_signal <= `MEM_NOP;
                 // 真取指令请求
                 if (inst_fetch_enabled) begin
                     CNT               <= 2;
                     _requested_addr   <= inst_addr;
-                    inst_fetch_status <= `ICACHE_WORKING;
+                    inst_fetch_status <= `I_CACHE_WORKING;
+                    mem_vis_type      <= `MEM_READ;
                     // 判断是否hit
                     _hit = `FALSE;
-                    for (integer ind = 0 ;ind < ICACHE_SIZE ; ind = ind + 1) begin
+                    for (integer ind = 0 ;ind < I_CACHE_SIZE ; ind = ind + 1) begin
                         if (inst_addr == inst_address[ind]) begin
                             _hit = `TRUE;
                             _instruction <= inst[ind];
@@ -138,6 +149,6 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
             $display("[ERROR]:unexpected cnt in instruction cache\n");
         endcase
     end
-
+    
     
 endmodule
