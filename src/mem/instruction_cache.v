@@ -63,7 +63,12 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                             inst_fetch_status <= `I_CACHE_WORKING;
                         end
                         // 加stall
-                        `MEM_WORKING:begin
+                        `MEM_INST_WORKING:begin
+                            CNT               <= 2;
+                            mem_vis_signal    <= `MEM_NOP;
+                            inst_fetch_status <= `I_CACHE_STALL;
+                        end
+                        `MEM_DATA_WORKING:begin
                             CNT               <= 2;
                             mem_vis_signal    <= `MEM_NOP;
                             inst_fetch_status <= `I_CACHE_STALL;
@@ -87,7 +92,12 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                                 inst_fetch_status <= `I_CACHE_WORKING;
                             end
                             // 加stall
-                            `MEM_WORKING:begin
+                            `MEM_INST_WORKING:begin
+                                CNT               <= 2;
+                                mem_vis_signal    <= `MEM_NOP;
+                                inst_fetch_status <= `I_CACHE_STALL;
+                            end
+                            `MEM_DATA_WORKING:begin
                                 CNT               <= 2;
                                 mem_vis_signal    <= `MEM_NOP;
                                 inst_fetch_status <= `I_CACHE_STALL;
@@ -99,33 +109,46 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                 end
             end
             1:begin
-                mem_vis_signal <= `MEM_NOP;
-                // 取指令
-                if (!_flash) begin
-                    _instruction      <= mem_data;
-                    CNT               <= 2;
-                    inst_fetch_status <= `IF_FINISHED;
-                    _flash            <= `TRUE;
-                end
-                // flash
-                inst[_current_index] <= mem_data;
-                // flash结束
-                if (_current_index == I_CACHE_SIZE-1) begin
-                    CNT               <= 0;
-                    inst_fetch_status <= `I_CACHE_RESTING;
-                    _flash            <= `FALSE;
-                    mem_vis_type      <= `MEM_NOP;
-                end
-                // 继续flash
-                else begin
-                    inst_address[_current_index+1] <= _current_addr+4;
-                    _current_index                 <= _current_index+1;
-                    _current_addr                  <= _current_addr+4;
-                    CNT                            <= 2;
-                    if (_flash) begin
-                        inst_fetch_status <= `I_CACHE_WORKING;
+                case (mem_status)
+                    `MEM_INST_WORKING: begin
+                        mem_vis_signal <= `MEM_NOP;
+                        // 取指令
+                        if (!_flash) begin
+                            _instruction      <= mem_data;
+                            CNT               <= 2;
+                            inst_fetch_status <= `IF_FINISHED;
+                            _flash            <= `TRUE;
+                        end
+                        // flash
+                        inst[_current_index] <= mem_data;
+                        // flash结束
+                        if (_current_index == I_CACHE_SIZE-1) begin
+                            CNT               <= 0;
+                            inst_fetch_status <= `I_CACHE_RESTING;
+                            _flash            <= `FALSE;
+                            mem_vis_type      <= `MEM_NOP;
+                        end
+                        // 继续flash
+                        else begin
+                            inst_address[_current_index+1] <= _current_addr+4;
+                            _current_index                 <= _current_index+1;
+                            _current_addr                  <= _current_addr+4;
+                            CNT                            <= 2;
+                            if (_flash) begin
+                                inst_fetch_status <= `I_CACHE_WORKING;
+                            end
+                        end
                     end
-                end
+                    // 数据读取优先，加stall
+                    `MEM_DATA_WORKING:begin
+                        CNT               <= 2;
+                        mem_vis_signal    <= `MEM_NOP;
+                        inst_fetch_status <= `I_CACHE_STALL;
+                    end
+                    default:
+                    $display("[ERROR]:unexpected mem_status when cnt == 1 in instruction cache\n");
+                endcase
+                
             end
             0:begin
                 mem_vis_signal <= `MEM_NOP;

@@ -24,6 +24,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                    input [LEN-1:0] mem_data,                            // interact with main memory
                    input [1:0] mem_status,
                    output reg [LEN-1:0] mem_writen_data,                // 写入memory的数据
+                   output [ENTRY_INDEX_SIZE-1:0] write_length,
                    output [ADDR_WIDTH-1:0] mem_vis_addr,                // 访存地址
                    output reg [1:0] mem_vis_signal);
     
@@ -49,36 +50,45 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     
     reg [ENTRY_INDEX_SIZE-1:0] _requested_length;
     
-    
     reg [ENTRY_INDEX_SIZE-1:0] _current_index;
     reg [ADDR_WIDTH-1:0] _current_addr;
     
     assign mem_vis_addr = _current_addr;
+    assign write_length = length;
     
     always @(posedge clk) begin
         case (CNT)
             // 等待开始工作
             2:begin
-                if (mem_status == `MEM_WORKING) begin
-                    CNT            <= 2;
-                    mem_vis_signal <= `MEM_NOP;
-                    mem_vis_status <= `D_CACHE_STALL;
-                end
-                else if (mem_status == `MEM_RESTING) begin
-                    CNT            <= 1;
-                    mem_vis_status <= `D_CACHE_WORKING;
-                    case (task_type)
-                        `D_CACHE_LOAD:begin
-                            mem_vis_signal <= `MEM_READ_BURST; // 批量读取
-                        end
-                        `D_CACHE_STORE:begin
-                            mem_vis_signal  <= `MEM_WRITE;      // 批量写
-                            mem_writen_data <= _writen_data[0]; // 第一个待写数据
-                        end
-                        default:
-                        $display("[ERROR]:unexpected task_type when cnt == 2 in data cache\n");
-                    endcase
-                end
+                case (mem_status)
+                    `MEM_INST_WORKING:begin
+                        CNT            <= 2;
+                        mem_vis_signal <= `MEM_NOP;
+                        mem_vis_status <= `D_CACHE_STALL;
+                    end
+                    `MEM_DATA_WORKING:begin
+                        CNT            <= 2;
+                        mem_vis_signal <= `MEM_NOP;
+                        mem_vis_status <= `D_CACHE_STALL;
+                    end
+                    `MEM_RESTING:begin
+                        CNT            <= 1;
+                        mem_vis_status <= `D_CACHE_WORKING;
+                        case (task_type)
+                            `D_CACHE_LOAD:begin
+                                mem_vis_signal <= `MEM_READ_BURST; // 批量读取
+                            end
+                            `D_CACHE_STORE:begin
+                                mem_vis_signal  <= `MEM_WRITE;      // 批量写
+                                mem_writen_data <= _writen_data[0]; // 第一个待写数据
+                            end
+                            default:
+                            $display("[ERROR]:unexpected task_type when cnt == 2 in data cache\n");
+                        endcase
+                    end
+                    default:
+                    $display("[ERROR]:unexpected mem_status when cnt == 2 in data cache\n");
+                endcase
             end
             // 工作中，处理mem数据，再次发起访存
             1:begin
