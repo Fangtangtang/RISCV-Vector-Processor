@@ -49,3 +49,11 @@
 `define     L_S_FINISHED         2'b10
 `define     D_CACHE_RESTING      2'b11
 
+
+// Reg File
+// -------------------------------------------------------------------------
+// working status
+`define     RF_NOP                  2'b00
+`define     SCALAR_RF_WRITE         2'b01
+`define     VECTOR_RF_WRITE         2'b01
+`define     RF_FINISHED             2'b11
