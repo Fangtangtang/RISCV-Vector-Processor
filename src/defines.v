@@ -4,8 +4,14 @@
 // 为二进制编码重命名，增加可读性
 // #############################################################################################################################
 
+// logic
 `define     FALSE               1'b0
 `define     TRUE                1'b1
+
+// sign bit
+`define     ZERO                2'b00
+`define     POS                 2'b01
+`define     NEG                 2'b11
 
 // IMPLEMENTATION-DEFINED CONSTANT PARAMETERS
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,3 +70,21 @@
 `define     SCALAR_RF_WRITE         2'b01
 `define     VECTOR_RF_WRITE         2'b01
 `define     RF_FINISHED             2'b11
+
+// ALU 
+// ----------------------------------------------------------
+// 计算控制信号
+`define     ALU_NOP                 3'b000
+`define     BINARY                  3'b001
+`define     IMM_BINARY              3'b010
+`define     BRANCH_COND             3'b011
+`define     MEM_ADDR                3'b100
+`define     PC_BASED                3'b101
+`define     IMM                     3'b110
+
+// binary
+`define     ADD                     4'b0000
+
+// IMM
+`define     ADDI                    3'b000
+`define     SLTI                    3'b010
