@@ -6,6 +6,7 @@
 // 访问场景：
 // - instruction decode阶段读取数据（输出完整向量，即使部分invalid）
 // - write back阶段向rd写（仅写length个，其余不变）
+// - todo: with mask?
 // #############################################################################################################################
 `include"src/defines.v"
 
@@ -49,37 +50,9 @@ module VECTOR_REGISTER_FILE#(parameter ADDR_WIDTH = 17,
             // 写
             if (write_back_enabled)begin
                 if (rf_signal == `VECTOR_RF_WRITE) begin
-                    case (length)
-                        8:begin
-                            register[rd] <= data;
-                        end
-                        7:begin
-                            register[rd] <= {data[VECTOR_SIZE*LEN-1:(VECTOR_SIZE-7)*LEN],register[rd][(VECTOR_SIZE-7)*LEN-1:0]};;
-                        end
-                        6:begin
-                            register[rd] <= {data[VECTOR_SIZE*LEN-1:(VECTOR_SIZE-6)*LEN],register[rd][(VECTOR_SIZE-6)*LEN-1:0]};;
-                        end
-                        5:begin
-                            register[rd] <= {data[VECTOR_SIZE*LEN-1:(VECTOR_SIZE-5)*LEN],register[rd][(VECTOR_SIZE-5)*LEN-1:0]};;
-                        end
-                        4:begin
-                            register[rd] <= {data[VECTOR_SIZE*LEN-1:(VECTOR_SIZE-4)*LEN],register[rd][(VECTOR_SIZE-4)*LEN-1:0]};;
-                        end
-                        3:begin
-                            register[rd] <= {data[VECTOR_SIZE*LEN-1:(VECTOR_SIZE-3)*LEN],register[rd][(VECTOR_SIZE-3)*LEN-1:0]};;
-                        end
-                        2:begin
-                            register[rd] <= {data[VECTOR_SIZE*LEN-1:(VECTOR_SIZE-2)*LEN],register[rd][(VECTOR_SIZE-2)*LEN-1:0]};;
-                        end
-                        1:begin
-                            register[rd] <= {data[VECTOR_SIZE*LEN-1:(VECTOR_SIZE-1)*LEN],register[rd][(VECTOR_SIZE-1)*LEN-1:0]};;
-                        end
-                        0:begin
-                            register[rd] <= register[rd];
-                        end
-                        default:
-                        $display("[ERROR]:unexpected length in vector register file\n");
-                    endcase
+                    for (integer i = 0;i < length;i = i + 1) begin
+                        register[rd][i*LEN +: LEN] <= data[i*LEN +: LEN]; // 更新length个
+                    end
                 end
                 status <= `RF_FINISHED;
             end

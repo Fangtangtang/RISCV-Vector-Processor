@@ -32,18 +32,21 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     reg valid[VECTOR_SIZE-1:0];
     reg [LEN-1:0] data[VECTOR_SIZE-1:0];
     
-    wire [LEN*VECTOR_SIZE-1:0] _data;
-    assign _data = {data[0],data[1],data[2],data[3],data[4],data[5],data[6],data[7]};
-    wire [LEN-1:0] _writen_data[VECTOR_SIZE-1:0];
-    assign _writen_data[0] = writen_vector_data[(VECTOR_SIZE-0)*LEN-1:(VECTOR_SIZE-1)*LEN];
-    assign _writen_data[1] = writen_vector_data[(VECTOR_SIZE-1)*LEN-1:(VECTOR_SIZE-2)*LEN];
-    assign _writen_data[2] = writen_vector_data[(VECTOR_SIZE-2)*LEN-1:(VECTOR_SIZE-3)*LEN];
-    assign _writen_data[3] = writen_vector_data[(VECTOR_SIZE-3)*LEN-1:(VECTOR_SIZE-4)*LEN];
-    assign _writen_data[4] = writen_vector_data[(VECTOR_SIZE-4)*LEN-1:(VECTOR_SIZE-5)*LEN];
-    assign _writen_data[5] = writen_vector_data[(VECTOR_SIZE-5)*LEN-1:(VECTOR_SIZE-6)*LEN];
-    assign _writen_data[6] = writen_vector_data[(VECTOR_SIZE-6)*LEN-1:(VECTOR_SIZE-7)*LEN];
-    assign _writen_data[7] = writen_vector_data[(VECTOR_SIZE-7)*LEN-1:(VECTOR_SIZE-8)*LEN];
+    genvar i;
+
+    wire [LEN*VECTOR_SIZE-1:0] _data;    
+    generate
+    for (i = 0; i < VECTOR_SIZE; i = i + 1) begin
+        assign _data[i*LEN +: LEN] = data[i]; // i*LEN 计算切片的起始位置。+: 操作符表示选择从起始位置开始的连续 LEN 个位
+    end
+    endgenerate
     
+    wire [LEN-1:0] _writen_data[VECTOR_SIZE-1:0];
+    generate
+    for (i = 0; i < VECTOR_SIZE; i = i + 1) begin
+        assign _writen_data[i] = writen_vector_data[((VECTOR_SIZE-i)*LEN)-1 : (VECTOR_SIZE-i-1)*LEN];
+    end
+    endgenerate
     
     reg [1:0] CNT = 0;
     reg [1:0] task_type;

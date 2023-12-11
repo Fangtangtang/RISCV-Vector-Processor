@@ -7,6 +7,13 @@
 `define     FALSE               1'b0
 `define     TRUE                1'b1
 
+// IMPLEMENTATION-DEFINED CONSTANT PARAMETERS
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// maximum size in bits of a vector element
+`define     ELEN                32
+// number of bits in a single vector register
+`define     VLEN                256
+
 // SIGNAL
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
