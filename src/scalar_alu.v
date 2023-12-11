@@ -5,15 +5,19 @@
 // #############################################################################################################################
 `include "src/defines.v"
 
-module SCALAR_ALU#(parameter LEN = 32)
-           (input [LEN - 1:0] rs1,
-            input [LEN - 1:0] rs2,
-            input [LEN - 1:0] imm,
-            input [LEN - 1:0] pc,
-            input [2:0] alu_signal,
-            input [3:0] func_code,
-            output reg [LEN - 1:0] result,
-            output reg [1:0] sign_bits);
+module SCALAR_ALU#(parameter ADDR_WIDTH = 17,
+                   parameter LEN = 32,
+                   parameter BYTE_SIZE = 8,
+                   parameter VECTOR_SIZE = 8,
+                   parameter ENTRY_INDEX_SIZE = 3)
+                  (input [LEN - 1:0] rs1,
+                   input [LEN - 1:0] rs2,
+                   input [LEN - 1:0] imm,
+                   input [LEN - 1:0] pc,
+                   input [2:0] alu_signal,
+                   input [3:0] func_code,
+                   output reg [LEN - 1:0] result,
+                   output reg [1:0] sign_bits);
     
     always @(*) begin
         case (alu_signal)
@@ -50,13 +54,13 @@ module SCALAR_ALU#(parameter LEN = 32)
             $display("[ERROR]:unexpected alu instruction\n");
         endcase
         if (result>0) begin
-                    sign_bits = `POS;
-                end
-                else if (result == 0) begin
-                    sign_bits = `ZERO;
-                end
-                else begin
-                    sign_bits = `NEG;
-                end
-    end    
+            sign_bits = `POS;
+        end
+        else if (result == 0) begin
+            sign_bits = `ZERO;
+        end
+        else begin
+            sign_bits = `NEG;
+        end
+    end
 endmodule

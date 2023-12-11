@@ -22,6 +22,7 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                           output reg [1:0] mem_vis_signal);
     
     // 全关联cache
+    reg valid [I_CACHE_SIZE-1:0];
     reg [ADDR_WIDTH-1:0] inst_address [I_CACHE_SIZE-1:0];
     reg [LEN-1:0] inst [I_CACHE_SIZE-1:0];
     
@@ -53,6 +54,7 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                 end
                 else begin
                     inst_address[0] <= _requested_addr;
+                    valid[0]        <= `TRUE;
                     _current_addr   <= _requested_addr;
                     _current_index  <= 0;
                     case (mem_status)
@@ -131,6 +133,7 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                         // 继续flash
                         else begin
                             inst_address[_current_index+1] <= _current_addr+4;
+                            valid[_current_index+1]        <= `TRUE;
                             _current_index                 <= _current_index+1;
                             _current_addr                  <= _current_addr+4;
                             CNT                            <= 2;
@@ -161,7 +164,7 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                     // 判断是否hit
                     _hit = `FALSE;
                     for (integer ind = 0 ;ind < I_CACHE_SIZE ; ind = ind + 1) begin
-                        if (inst_addr == inst_address[ind]) begin
+                        if (inst_addr == inst_address[ind]&&valid[ind]) begin
                             _hit = `TRUE;
                             _instruction <= inst[ind];
                         end
