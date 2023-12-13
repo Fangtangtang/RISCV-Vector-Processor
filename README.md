@@ -182,7 +182,7 @@ vl2re32.v	v24,(a0)
 | nf |mew|mop| vm|   lumop       |     rs1     |width|     vd      | 0000111 | VL
 | 001|  0| 00|  1|   01000       |    01010    | 110 |   11000     | 0000111 | vl2re32.v
 ```
-- nf:specifies the number of fields in each segment, for segment load/stores
+- nf:specifies the number of fields in each segment, for segment load/stores (001:2)
 - mew:extended memory element width.     
 - mop:specifies memory addressing mode
 - vm:specifies whether vector masking is enabled (0 = mask enabled, 1 = mask disabled)
@@ -242,11 +242,16 @@ LMUL=2^(vlmul[2:0])
 
 ## Example
 ### VADD
+vl2re32.v把两个向量寄存器绑在一起作为一个group，然后a3中的AVL不会超过MAXVL(受LMUL作用)
+vsetvli会根据指令里面的vtype等等计算VLMAX，根据VLMAX和指令里面的AVL设置VL。
+add就对寄存器中vl个做加法。
+vs2r.v把绑成一组的两个寄存器数据都写回内存
+
 ```
 0000000000001000 <vec_add_rvv>:
     1000:	22856c07          	vl2re32.v	v24,(a0)            // 从内存指定位置读，从a0中地址开始，读数据到打包在一起的两个vec register(v24,v25)
     1004:	2285ed07          	vl2re32.v	v26,(a1)
-    1008:	0516f057          	vsetvli	zero,a3,e32,m2,ta,mu    // 设置vtype(vl?) 两个vec register被打包成一个，单个数据位宽32
+    1008:	0516f057          	vsetvli	zero,a3,e32,m2,ta,mu    // 设置vtype\vl 两个vec register被打包成一个，单个数据位宽32
     100c:	038d0c57          	vadd.vv	v24,v24,v26             // 向量加法
     1010:	22860c27          	vs2r.v	v24,(a2)                // 结果再写入内存，打包在一起的两个vec register(v24,v25)中数据存入内存
     1014:	00008067          	ret
