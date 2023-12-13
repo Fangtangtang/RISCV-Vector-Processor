@@ -159,6 +159,86 @@ set VLMAX(受LMUL影响) according to their vtype argument, then set vl obeying 
 -  5-bit immediate, sign-extended to SEW bits, unless otherwise specified.
 - taken from the scalar x register specified by rs1. XLEN>SEW, the least significant SEW bits of the x register are used. XLEN<SEW, sign-extended to SEW bits, unless otherwise specified.
 
+## Widening Vector 
+
+形成双宽和之前，先对较窄的源操作数进行扩展
+
+widening operations where the destination vector register group has EEW=2*SEW and EMUL=2*LMUL
+
+目标寄存器的元素位宽和grouping都是我的两倍
+
+```
+# Double-width result, two single-width sources
+# 2*SEW = SEW op SEW
+vwop.vv vd, vs2, vs1, vm # integer vector-vector vd[i] = vs2[i] op vs1[i]
+vwop.vx vd, vs2, rs1, vm # integer vector-scalar vd[i] = vs2[i] op x[rs1]
+
+# Double-width result, first source double-width, second source single-width
+# 2*SEW = 2*SEW op SEW
+vwop.wv vd, vs2, vs1, vm # integer vector-vector vd[i] = vs2[i] op vs1[i]
+vwop.wx vd, vs2, rs1, vm # integer vector-scalar vd[i] = vs2[i] op x[rs1]
+
+```
+
+## Vector Integer Extension
+
+zero- or sign-extend a source vector integer operand with EEW less than SEW to fill SEW-sized elements in the destination
+
+The EEW of the source is 1/2, 1/4, or 1/8 of SEW, while EMUL of the source is (EEW/SEW)*LMUL. The destination has EEW equal to SEW and EMUL equal to LMUL
+
+```
+vzext.vf2 vd, vs2, vm # Zero-extend SEW/2 source to SEW destination
+vsext.vf2 vd, vs2, vm # Sign-extend SEW/2 source to SEW destination
+
+```
+
+
+
+## Vector Integer Add-with-Carry / Subtract-with-Borrow
+
+用于多字整数运算(执行高精度运算或需要处理大整数...)
+
+masked instructions, but they operate on and write back all body elements
+
+add or subtract the source operands and the carry-in or borrow-in, and write the result to vector register vd.
+
+For each operation (add or subtract), **two instructions are provided**: 
+
+- one to provide the result (SEW width),
+- the second to generate the carry output (single bit encoded as a mask boolean).
+
+
+
+**carry input** must come from the implicit **v0** register
+
+carry outputs can be written to any vector register that respects the source/destination overlap restrictions.
+
+
+
+vmadc and vmsbc add or subtract the source operands, optionally add the carry-in or subtract the borrow-in if masked (vm=0), and write the result back to mask register vd. If unmasked (vm=1), there is no carry-in or borrow-in. 
+
+These instructions operate on and write back all body elements, even if masked. 
+
+Because these instructions produce a mask value, they always operate with a tail-agnostic policy.
+
+
+
+实质：
+
+- vadc:三个数据相加减，可能有进位退位，结果写到指定位置
+
+- vmadc:三个数据相加减，进位退位写到指定寄存器
+
+
+
+```
+ # Example multi-word arithmetic sequence, accumulating into v4
+ vmadc.vvm v1, v4, v8, v0 # Get carry into temp register v1, v0 is implicit
+ vadc.vvm v4, v4, v8, v0 # Calc new sum
+ vmmv.m v0, v1 # Move temp carry into v0 for next word
+
+```
+
 
 
 # Vector Load and Store

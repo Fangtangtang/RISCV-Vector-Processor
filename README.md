@@ -56,6 +56,7 @@
 ```
 ### RV64v
 
+#### Vector Integer Add\Subtract
 | ISNT TYPE | funct6 | funct3 | vs1  | vs2  |
 | :-------: | :----: | :----: | :--: | :--: |
 |  vadd.vv  | 000000 |        |      |      |
@@ -73,8 +74,6 @@
 | vmadd.vv  | 101001 |        |      |      |
 
 
-
-#### Vector Integer Add\Subtract
 ##### Integer add
 ```
 vadd.vv vd, vs2, vs1, vm # Vector-vector
@@ -101,41 +100,117 @@ vsub.vv vd, vs2, vs1, vm # Vector-vector
 
 
 ##### Widening unsigned integer add
-2*SEW = SEW + SEW
+Widening unsigned integer add/subtract, 2*SEW = SEW + SEW, vector-vector
+
+无符号数，0拓展
+
+将位宽为SEW的做加法运算后存入为2*SEW
 ```
 vwaddu.vv vd, vs2, vs1, vm # vector-vector
 ```
-
+```
+31 29 28 27 26 25 24           20 19         15 14 12 11          7 6       0
++----+---+---+---+---------------+-------------+-----+-------------+---------+
+|    funct   | vm|       vs2     |     rs1     | 000 |     vd      | opcode  | VWADDU
+|    110000  |  1|               |             | 000 |             | 1010111 | vwaddu
+```
 ##### Widening unsigned integer subtract
-2*SEW = SEW - SEW
+Widening unsigned integer add/subtract, 2*SEW = SEW - SEW, vector-vector
+
+无符号数，0拓展
+
+将位宽为SEW的做减法运算后存入为2*SEW
 ```
 vwsubu.vv vd, vs2, vs1, vm # vector-vector
 ```
-
+```
+31 29 28 27 26 25 24           20 19         15 14 12 11          7 6       0
++----+---+---+---+---------------+-------------+-----+-------------+---------+
+|    funct   | vm|       vs2     |     rs1     | 000 |     vd      | opcode  | VWSUBU
+|    110010  |  1|               |             | 000 |             | 1010111 | vwsubu
+```
 ##### Widening signed integer add
+符号位拓展
+
 2*SEW = SEW + SEW
 ```
 vwadd.vv vd, vs2, vs1, vm # vector-vector
 ```
-
+```
+31 29 28 27 26 25 24           20 19         15 14 12 11          7 6       0
++----+---+---+---+---------------+-------------+-----+-------------+---------+
+|    funct   | vm|       vs2     |     rs1     | 000 |     vd      | opcode  | VWADD
+|    110001  |  1|               |             | 000 |             | 1010111 | vwadd
+```
 ##### Widening signed integer subtract
+符号位拓展
+
 2*SEW = SEW - SEW
 ```
 vwsub.vv vd, vs2, vs1, vm # vector-vector
 ```
-
+```
+31 29 28 27 26 25 24           20 19         15 14 12 11          7 6       0
++----+---+---+---+---------------+-------------+-----+-------------+---------+
+|    funct   | vm|       vs2     |     rs1     | 000 |     vd      | opcode  | VWSUB
+|    110011  |  1|               |             | 000 |             | 1010111 | vwsub
+```
 ##### Vector Integer Add-with-Carry
+Produce sum with carry. 
+
 vd[i] = vs2[i] + vs1[i] + v0.mask[i]
+
 ```
  vadc.vvm vd, vs2, vs1, v0 # Vector-vector
 ```
+```
+31 29 28 27 26 25 24           20 19         15 14 12 11          7 6       0
++----+---+---+---+---------------+-------------+-----+-------------+---------+
+|    funct   | vm|       vs2     |     rs1     | 000 |     vd      | opcode  | VADC
+|    010000  |  0|               |             | 000 |             | 1010111 | vadc
+```
 
+Produce carry out in mask register format.
+
+vd.mask[i] = carry_out(vs2[i] + vs1[i])
+
+```
+vmadc.vv    vd, vs2, vs1
+```
+```
+31 29 28 27 26 25 24           20 19         15 14 12 11          7 6       0
++----+---+---+---+---------------+-------------+-----+-------------+---------+
+|    funct   | vm|       vs2     |     rs1     | 000 |     vd      | opcode  | VMADC
+|    010001  |  1|               |             | 000 |             | 1010111 | vmadc
+```
 ##### Vector Integer Subtract-with-Borrow
+Produce difference with borrow. 
+
 vd[i] = vs2[i] - vs1[i] - v0.mask[i]
 ```
  vsbc.vvm vd, vs2, vs1, v0 # Vector-vector
 ```
+```
+31 29 28 27 26 25 24           20 19         15 14 12 11          7 6       0
++----+---+---+---+---------------+-------------+-----+-------------+---------+
+|    funct   | vm|       vs2     |     rs1     | 000 |     vd      | opcode  | VSBC
+|    010010  |  0|               |             | 000 |             | 1010111 | vsbc
+```
 
+Produce borrow out in mask register format. 
+
+vd.mask[i] = borrow_out(vs2[i] - vs1[i] - v0.mask[i])
+
+```
+vmsbc.vvm   vd, vs2, vs1, v0
+```
+```
+31 29 28 27 26 25 24           20 19         15 14 12 11          7 6       0
++----+---+---+---+---------------+-------------+-----+-------------+---------+
+|    funct   | vm|       vs2     |     rs1     | 000 |     vd      | opcode  | VMSBC
+|    010011  |  0|               |             | 000 |             | 1010111 | vmsbc
+
+```
 ```
 # Example multi-word arithmetic sequence, accumulating into v4
  vmadc.vvm v1, v4, v8, v0 # Get carry into temp register v1
@@ -150,7 +225,13 @@ The vector integer extension instructions zero- or sign-extend a source vector i
 vzext.vf2 vd, vs2, vm # Zero-extend SEW/2 source to SEW destination
 vsext.vf2 vd, vs2, vm # Sign-extend SEW/2 source to SEW destination
 ```
+```
+31 29 28 27 26 25 24           20 19         15 14 12 11          7 6       0
++----+---+---+---+---------------+-------------+-----+-------------+---------+
+|    funct   | vm|       vs2     |  type code  | 010 |     vd      | opcode  | 
+|    010010  |  0|               |             | 010 |             | 1010111 | 
 
+```
 #### Vector Single-Width Integer Multiply-Add
 ```
 # Integer multiply-add, overwrite addend
@@ -162,13 +243,15 @@ vnmsac.vv vd, vs1, vs2, vm # vd[i] = -(vs1[i] * vs2[i]) + vd[i]
 # Integer multiply-add, overwrite multiplicand
 vmadd.vv vd, vs1, vs2, vm # vd[i] = (vs1[i] * vd[i]) + vs2[i]
 ```
-
 ```
 31 29 28 27 26 25 24           20 19         15 14 12 11          7 6       0
 +----+---+---+---+---------------+-------------+-----+-------------+---------+
-|    vs3 |  0| vm|       vs2     |     vs1     | 1mm |     vd      | opcode  | VMADD
-
+|    funct   | vm|       vs2     |  type code  | 010 |     vd      | opcode  | 
+|    101101  |  0|               |             | 010 |             | 1010111 | vmacc
+|    101111  |  0|               |             | 010 |             | 1010111 | vnmsac
+|    101001  |  0|               |             | 010 |             | 1010111 | vmadd
 ```
+
 #### Vector Load
 ```
 # Vector Load/Store Whole Register Instructions
