@@ -95,12 +95,32 @@
 `define     VEC_ALU_WORKING         2'b01
 `define     VEC_ALU_FINISHED        2'b10
 
-// binary
+// BINARY
 `define     ADD                     4'b0000
 
 // IMM
 `define     ADDI                    3'b000
 `define     SLTI                    3'b010
+
+// VECTOR
+`define     VECTOR_ADD                   6'b000000
+`define     VECTOR_SUB                   6'b000001
+`define     VECTOR_WADDU                 6'b000010
+`define     VECTOR_WSUBU                 6'b000011
+`define     VECTOR_WADD                  6'b000100
+`define     VECTOR_WSUB                  6'b000101
+`define     VECTOR_ADC                   6'b000110
+`define     VECTOR_SBC                   6'b000111 
+`define     VECTOR_MSBC                  6'b001000
+`define     VECTOR_MACC                  6'b001001
+`define     VECTOR_NMSAC                 6'b001010
+`define     VECTOR_MADD                  6'b001011
+`define     VECTOR_ZEXT2                 6'b001100 
+`define     VECTOR_SEXT2                 6'b001101
+`define     VECTOR_ZEXT4                 6'b001110 
+`define     VECTOR_SEXT4                 6'b001111
+`define     VECTOR_ZEXT8                 6'b010000 
+`define     VECTOR_SEXT8                 6'b010001
 
 // DECODE
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -183,4 +203,29 @@
 `define     OPMVX               3'b110
 `define     OPCFG               3'b111 // configuration
 
+// opcode
+// (func6[5:0])
+`define     V_ADD                   6'b000000
+`define     V_SUB                   6'b000010
+`define     V_WADDU                 6'b110000
+`define     V_WSUBU                 6'b110010
+`define     V_WADD                  6'b110001
+`define     V_WSUB                  6'b110011
+`define     V_ADC                   6'b010000
+`define     V_SBC                   6'b010010 // funct3 = 000
+`define     V_MSBC                  6'b010011
+`define     V_MACC                  6'b101101
+`define     V_NMSAC                 6'b101111
+`define     V_MADD                  6'b101001
 
+`define     V_ZEXT                  6'b010010 // in need of funct3, vs1 to determine
+`define     V_SEXT                  6'b010010
+
+// ext type
+// (vs1[4:0])
+`define     ZEXT2                  5'b00110     
+`define     SEXT2                  5'b00111
+`define     ZEXT4                  5'b00100
+`define     SEXT4                  5'b00101
+`define     ZEXT8                  5'b00010
+`define     SEXT8                  5'b00011

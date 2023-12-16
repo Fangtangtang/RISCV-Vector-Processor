@@ -22,7 +22,7 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
                              parameter ENTRY_INDEX_SIZE = 3,
                              parameter LANE_SIZE = 2,
                              parameter LANE_INDEX_SIZE = 1)
-                            (input wire clk,                            // clock
+                            (input wire clk,                        // clock
                              input rst,
                              input rdy_in,
                              input execute,
@@ -30,10 +30,11 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
                              input [VECTOR_SIZE*LEN - 1:0] vs1,
                              input [VECTOR_SIZE*LEN - 1:0] vs2,
                              input [VECTOR_SIZE*LEN - 1:0] mask,
-                             input [LEN - 1:0] imm,                     // 立即数
-                             input [LEN - 1:0] rs,                      // 标量操作数
+                             input [LEN - 1:0] imm,                 // 立即数
+                             input [LEN - 1:0] rs,                  // 标量操作数
                              input [2:0] alu_signal,
                              input [1:0] vec_operand_type,
+                             input [4:0] ext_type,
                              input [5:0] funct6,
                              output [VECTOR_SIZE*LEN - 1:0] result,
                              output [1:0] vector_alu_status);
@@ -47,12 +48,58 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     reg [LEN - 1:0] rs_;
     reg [2:0] task_type;
     reg [1:0] operand_type;
-    reg [5:0] funct6_;
+    reg [5:0] alu_opcode;
     reg [1:0] working_status;
     
     reg [ENTRY_INDEX_SIZE:0] next;          // 下一周期起始index
     
     reg [VECTOR_SIZE*LEN - 1:0] alu_result;
+    
+    reg [5:0] opcode;
+    always @(*) begin
+        case (funct6)
+            `V_ADD:opcode   = `VECTOR_ADD;
+            `V_SUB:opcode   = `VECTOR_SUB;
+            `V_WADDU:opcode = `VECTOR_WADDU;
+            `V_WSUBU:opcode = `VECTOR_WSUBU;
+            `V_WADD:opcode  = `VECTOR_WADD;
+            `V_WSUB:opcode  = `VECTOR_WSUB;
+            `V_ADC:opcode   = `VECTOR_ADC;
+            `V_SBC:begin
+                if (vec_operand_type == `OPIVV)begin
+                    opcode = `VECTOR_SBC;
+                end
+            end
+            `V_MSBC:opcode  = `VECTOR_MSBC;
+            `V_MACC:opcode  = `VECTOR_MACC;
+            `V_NMSAC:opcode = `VECTOR_NMSAC;
+            `V_MADD:opcode  = `VECTOR_MADD;
+            `V_ZEXT:begin
+                if (vec_operand_type == `OPMVV)begin
+                    case (ext_type)
+                        `ZEXT2:opcode  = `VECTOR_ZEXT2;
+                        `ZEXT4:opcode  = `VECTOR_ZEXT4;
+                        `ZEXT8:opcode  = `VECTOR_ZEXT8;
+                        default:
+                        $display("[ERROR]:unexpected zext type in vector alu\n");
+                    endcase
+                end
+            end
+            `V_SEXT:begin
+                if (vec_operand_type == `OPMVV)begin
+                    case (ext_type)
+                        `SEXT2:opcode  = `VECTOR_SEXT2;
+                        `SEXT4:opcode  = `VECTOR_SEXT4;
+                        `SEXT8:opcode  = `VECTOR_SEXT8;
+                        default:
+                        $display("[ERROR]:unexpected sext type in vector alu\n");
+                    endcase
+                end
+            end
+            default:
+            $display("[ERROR]:unexpected funct6 in vector alu\n");
+        endcase
+    end
     
     // Dispatcher
     always @(posedge clk) begin
@@ -67,7 +114,7 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
                     rs_            <= rs;
                     task_type      <= alu_signal;
                     operand_type   <= vec_operand_type;
-                    funct6_        <= funct6;
+                    alu_opcode     <= opcode;
                     working_status <= `VEC_ALU_WORKING;
                 end
             end
@@ -96,7 +143,7 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
                     rs_            <= rs;
                     task_type      <= alu_signal;
                     operand_type   <= vec_operand_type;
-                    funct6_        <= funct6;
+                    alu_opcode     <= opcode;
                     working_status <= `VEC_ALU_WORKING;
                     next           <= 0;
                 end
@@ -123,14 +170,14 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     .rs                 (rs_),
     .alu_signal         (task_type),
     .vec_operand_type   (operand_type),
-    .funct6             (funct6_),
+    .opcode             (alu_opcode),
     .result             (out_signals[i])
     );
     end
     endgenerate
     
     // Recaller
-    assign result = alu_result;
+    assign result            = alu_result;
     assign vector_alu_status = working_status;
-
+    
 endmodule

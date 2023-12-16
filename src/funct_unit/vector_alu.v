@@ -16,7 +16,7 @@ module VECTOR_ALU#(parameter ADDR_WIDTH = 17,
                    input [LEN - 1:0] rs,                // 标量操作数
                    input [2:0] alu_signal,
                    input [1:0] vec_operand_type,
-                   input [5:0] funct6,
+                   input [5:0] opcode,
                    output reg [LEN - 1:0] result);
     
 endmodule
