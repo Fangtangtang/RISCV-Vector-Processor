@@ -24,7 +24,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                    input mem_access_enabled,
                    input is_vector,                                // 是否为向量访存
                    input [1:0] d_cache_vis_signal,
-                   input [ENTRY_INDEX_SIZE-1:0] length,
+                   input [ENTRY_INDEX_SIZE:0] length,
                    output reg [LEN-1:0] scalar_data,
                    output reg [LEN*VECTOR_SIZE-1:0] vector_data,
                    input [LEN-1:0] writen_scalar_data,
@@ -33,7 +33,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                    input [LEN-1:0] mem_data,
                    input [1:0] mem_status,
                    output reg [LEN-1:0] mem_writen_data,           // 写入memory的数据
-                   output [ENTRY_INDEX_SIZE-1:0] write_length,
+                   output [ENTRY_INDEX_SIZE:0] write_length,
                    output [ADDR_WIDTH-1:0] mem_vis_addr,           // 访存地址
                    output reg [1:0] mem_vis_signal);
     genvar i;
@@ -86,7 +86,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     reg [1:0] CNT = 0;
     reg [1:0] task_type;
     
-    reg [ENTRY_INDEX_SIZE-1:0] _requested_length;
+    reg [ENTRY_INDEX_SIZE:0] _requested_length;
     
     reg [ENTRY_INDEX_SIZE-1:0] _current_index;
     reg [V_CACHE_INDEX_SIZE-1:0] _current_v_cache_line;

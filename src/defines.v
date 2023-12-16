@@ -90,6 +90,11 @@
 `define     VEC_IMM                 2'b10
 `define     VEC_SCALAR              2'b11
 
+// vector alu working status
+`define     VEC_ALU_NOP             2'b00
+`define     VEC_ALU_WORKING         2'b01
+`define     VEC_ALU_FINISHED        2'b10
+
 // binary
 `define     ADD                     4'b0000
 
