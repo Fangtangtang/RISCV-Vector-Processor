@@ -20,6 +20,17 @@
 // number of bits in a single vector register
 `define     VLEN                256
 
+// CSR
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// VSEW     [2:0]
+// dynamic selected element width
+// By default, a vector register is viewed as being divided into VLEN/SEW elements
+`define     ONE_BYTE            3'b000
+`define     TWO_BYTE            3'b001
+`define     FOUR_BYTE           3'b010
+`define     EIGHT_BYTE          3'b011
+
+
 // SIGNAL
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -110,16 +121,16 @@
 `define     VECTOR_WADD                  6'b000100
 `define     VECTOR_WSUB                  6'b000101
 `define     VECTOR_ADC                   6'b000110
-`define     VECTOR_SBC                   6'b000111 
+`define     VECTOR_SBC                   6'b000111
 `define     VECTOR_MSBC                  6'b001000
 `define     VECTOR_MACC                  6'b001001
 `define     VECTOR_NMSAC                 6'b001010
 `define     VECTOR_MADD                  6'b001011
-`define     VECTOR_ZEXT2                 6'b001100 
+`define     VECTOR_ZEXT2                 6'b001100
 `define     VECTOR_SEXT2                 6'b001101
-`define     VECTOR_ZEXT4                 6'b001110 
+`define     VECTOR_ZEXT4                 6'b001110
 `define     VECTOR_SEXT4                 6'b001111
-`define     VECTOR_ZEXT8                 6'b010000 
+`define     VECTOR_ZEXT8                 6'b010000
 `define     VECTOR_SEXT8                 6'b010001
 
 // DECODE
@@ -223,7 +234,7 @@
 
 // ext type
 // (vs1[4:0])
-`define     ZEXT2                  5'b00110     
+`define     ZEXT2                  5'b00110
 `define     SEXT2                  5'b00111
 `define     ZEXT4                  5'b00100
 `define     SEXT4                  5'b00101

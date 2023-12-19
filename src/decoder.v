@@ -184,7 +184,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                                 exe_signal       = `BINARY;
                                 vec_operand_type = `VEC_VEC;
                             end
-                            `OPMVV:begin // mask vec-vec    todo:mask?
+                            `OPMVV:begin // mask vec-vec    
                                 exe_signal       = `BINARY;
                                 vec_operand_type = `VEC_VEC;
                             end
@@ -196,7 +196,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                                 exe_signal       = `BINARY;
                                 vec_operand_type = `VEC_SCALAR;
                             end
-                            `OPMVX:begin // mask vec-scalar     todo:mask?
+                            `OPMVX:begin // mask vec-scalar   
                                 exe_signal       = `BINARY;
                                 vec_operand_type = `VEC_SCALAR;
                             end

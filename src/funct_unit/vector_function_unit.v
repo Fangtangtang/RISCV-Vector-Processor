@@ -17,6 +17,7 @@
 
 module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
                              parameter LEN = 32,
+                             parameter LONGEST_LEN = 64,
                              parameter BYTE_SIZE = 8,
                              parameter VECTOR_SIZE = 8,
                              parameter ENTRY_INDEX_SIZE = 3,
@@ -26,6 +27,8 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
                              input rst,
                              input rdy_in,
                              input execute,
+                             input [2:0] VSEW,
+                             input vm,
                              input [ENTRY_INDEX_SIZE:0] length,
                              input [VECTOR_SIZE*LEN - 1:0] vs1,
                              input [VECTOR_SIZE*LEN - 1:0] vs2,
@@ -40,6 +43,9 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
                              output [1:0] vector_alu_status);
     
     
+    reg [2:0] previous_vsew;
+    reg [2:0] current_vsew;
+    reg masked;
     reg [ENTRY_INDEX_SIZE:0] vector_length; // 记录所需运算的向量长度
     reg [VECTOR_SIZE*LEN - 1:0] vs1_;
     reg [VECTOR_SIZE*LEN - 1:0] vs2_;
@@ -56,48 +62,85 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     reg [VECTOR_SIZE*LEN - 1:0] alu_result;
     
     reg [5:0] opcode;
+    reg [2:0] vsew;
     always @(*) begin
         case (funct6)
-            `V_ADD:opcode   = `VECTOR_ADD;
-            `V_SUB:opcode   = `VECTOR_SUB;
-            `V_WADDU:opcode = `VECTOR_WADDU;
-            `V_WSUBU:opcode = `VECTOR_WSUBU;
-            `V_WADD:opcode  = `VECTOR_WADD;
-            `V_WSUB:opcode  = `VECTOR_WSUB;
-            `V_ADC:opcode   = `VECTOR_ADC;
+            `V_ADD:begin
+                opcode = `VECTOR_ADD;
+                vsew   = VSEW;
+            end
+            `V_SUB:begin
+                opcode = `VECTOR_SUB;
+                vsew   = VSEW;
+            end
+            `V_WADDU:begin
+                opcode = `VECTOR_WADDU;
+            end
+            `V_WSUBU:begin
+                opcode = `VECTOR_WSUBU;
+            end
+            `V_WADD:begin
+                opcode = `VECTOR_WADD;
+            end
+            `V_WSUB:begin
+                opcode = `VECTOR_WSUB;
+            end
+            `V_ADC:begin
+                opcode = `VECTOR_ADC;
+            end
             `V_SBC:begin
                 if (vec_operand_type == `OPIVV)begin
                     opcode = `VECTOR_SBC;
                 end
             end
-            `V_MSBC:opcode  = `VECTOR_MSBC;
-            `V_MACC:opcode  = `VECTOR_MACC;
-            `V_NMSAC:opcode = `VECTOR_NMSAC;
-            `V_MADD:opcode  = `VECTOR_MADD;
+            `V_MSBC:begin
+                opcode = `VECTOR_MSBC;
+            end
+            `V_MACC:begin
+                opcode = `VECTOR_MACC;
+            end
+            `V_NMSAC:begin
+                opcode = `VECTOR_NMSAC;
+            end
+            `V_MADD:begin
+                opcode = `VECTOR_MADD;
+            end
             `V_ZEXT:begin
                 if (vec_operand_type == `OPMVV)begin
                     case (ext_type)
-                        `ZEXT2:opcode  = `VECTOR_ZEXT2;
-                        `ZEXT4:opcode  = `VECTOR_ZEXT4;
-                        `ZEXT8:opcode  = `VECTOR_ZEXT8;
+                        `ZEXT2:begin
+                            opcode = `VECTOR_ZEXT2;
+                        end
+                        `ZEXT4:begin
+                            opcode = `VECTOR_ZEXT4;
+                        end
+                        `ZEXT8:begin
+                            opcode = `VECTOR_ZEXT8;
+                        end
                         default:
-                        $display("[ERROR]:unexpected zext type in vector alu\n");
+                        $display("[ERROR]:unexpected zext type in vector function unit\n");
                     endcase
                 end
             end
             `V_SEXT:begin
                 if (vec_operand_type == `OPMVV)begin
                     case (ext_type)
-                        `SEXT2:opcode  = `VECTOR_SEXT2;
-                        `SEXT4:opcode  = `VECTOR_SEXT4;
-                        `SEXT8:opcode  = `VECTOR_SEXT8;
+                        `SEXT2:begin
+                            opcode = `VECTOR_SEXT2;
+                        end
+                        `SEXT4:begin
+                            opcode = `VECTOR_SEXT4;
+                        end
+                        `SEXT8:begin
+                            opcode = `VECTOR_SEXT8;
+                        end
                         default:
-                        $display("[ERROR]:unexpected sext type in vector alu\n");
+                        $display("[ERROR]:unexpected sext type in vector function unit\n");
                     endcase
                 end
             end
             default:
-            $display("[ERROR]:unexpected funct6 in vector alu\n");
+            $display("[ERROR]:unexpected funct6 in vector function unit\n");
         endcase
     end
     
@@ -106,6 +149,8 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
         case (working_status)
             `VEC_ALU_NOP:begin
                 if (execute&&length > 0) begin
+                    previous_vsew  <= VSEW;
+                    masked         <= vm;
                     vector_length  <= length;
                     vs1_           <= vs1;
                     vs2_           <= vs2;
@@ -115,13 +160,29 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
                     task_type      <= alu_signal;
                     operand_type   <= vec_operand_type;
                     alu_opcode     <= opcode;
+                    current_vsew   <= vsew;
                     working_status <= `VEC_ALU_WORKING;
                 end
             end
             `VEC_ALU_WORKING:begin
                 for (integer j = 0;j < LANE_SIZE;j = j + 1) begin
                     if (!(next + j > vector_length)) begin
-                        alu_result[(next+j)*LEN +: LEN] <= out_signals[j];
+                        case (current_vsew)
+                            `ONE_BYTE:begin
+                                alu_result[(next+j)*8 +: 8] <= out_signals[j][7:0];
+                            end
+                            `TWO_BYTE:begin
+                                alu_result[(next+j)*16 +: 16] <= out_signals[j][15:0];
+                            end
+                            `FOUR_BYTE:begin
+                                alu_result[(next+j)*32 +: 32] <= out_signals[j][31:0];
+                            end
+                            `EIGHT_BYTE:begin
+                                alu_result[(next+j)*64 +: 64] <= out_signals[j][63:0];
+                            end
+                            default:
+                            $display("[ERROR]:unexpected current vsew in vector function unit\n");
+                        endcase
                     end
                 end
                 if (next + LANE_SIZE<vector_length) begin
@@ -135,6 +196,8 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
             end
             `VEC_ALU_FINISHED:begin
                 if (execute&&length > 0) begin
+                    previous_vsew  <= VSEW;
+                    masked         <= vm;
                     vector_length  <= length;
                     vs1_           <= vs1;
                     vs2_           <= vs2;
@@ -144,6 +207,7 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
                     task_type      <= alu_signal;
                     operand_type   <= vec_operand_type;
                     alu_opcode     <= opcode;
+                    current_vsew   <= vsew;
                     working_status <= `VEC_ALU_WORKING;
                     next           <= 0;
                 end
@@ -152,18 +216,21 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
                 end
             end
             default:
-            $display("[ERROR]:unexpected working status in vector alu\n");
+            $display("[ERROR]:unexpected working status in vector function unit\n");
         endcase
     end
     
     // Lanes
-    wire [LEN-1:0] out_signals[LANE_SIZE-1:0];
+    wire [LONGEST_LEN-1:0] out_signals[LANE_SIZE-1:0];
     
     generate
     genvar i;
     for (i = 0; i < LANE_SIZE; i = i + 1) begin :instances
     VECTOR_ALU #(i) vector_alu (
-    .vs1                (vs1_[(next+i)*LEN +: LEN]),
+    .PREV_VSEW          (previous_vsew),
+    .CUR_VSEW           (current_vsew),
+    .vm                 (masked),
+    .vs1                (vs1_[(next+i)*LEN +: LEN]), // todo: multi data type
     .vs2                (vs2_[(next+i)*LEN +: LEN]),
     .mask               (mask_[(next+i)*LEN +: LEN]),
     .imm                (imm_),
