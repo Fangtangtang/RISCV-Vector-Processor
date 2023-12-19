@@ -51,7 +51,7 @@ module VECTOR_REGISTER_FILE#(parameter ADDR_WIDTH = 17,
             if (write_back_enabled)begin
                 if (rf_signal == `VECTOR_RF_WRITE) begin
                     for (integer i = 0;i < length;i = i + 1) begin
-                        register[rd][i*LEN +: LEN] <= data[i*LEN +: LEN]; // 更新length个
+                        register[rd][(i+1)*LEN-1 -: LEN] <= data[(i+1)*LEN-1 -: LEN]; // 更新length个
                     end
                 end
                 status <= `RF_FINISHED;

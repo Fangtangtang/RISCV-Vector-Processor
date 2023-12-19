@@ -2,6 +2,8 @@
 // VECTOR ALU
 // 
 // 向量计算时每个lane中一个
+// 
+// 输入输出向量数据为64位，根据vsew截取需要的位
 // #############################################################################################################################
 `include"src/defines.v"
 
@@ -15,9 +17,9 @@ module VECTOR_ALU#(parameter ADDR_WIDTH = 17,
                   (input [2:0] PREV_VSEW,
                    input [2:0] CUR_VSEW,
                    input vm,
-                   input [LEN - 1:0] vs1,
-                   input [LEN - 1:0] vs2,
-                   input [LEN - 1:0] mask,
+                   input [LONGEST_LEN - 1:0] vs1,
+                   input [LONGEST_LEN - 1:0] vs2,
+                   input [LONGEST_LEN - 1:0] mask,
                    input [LEN - 1:0] imm,                  // 立即数
                    input [LEN - 1:0] rs,                   // 标量操作数
                    input [2:0] alu_signal,

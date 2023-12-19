@@ -16,10 +16,10 @@
 `include "src/funct_unit/vector_alu.v"
 
 module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
-                             parameter LEN = 32,
+                             parameter LEN = 32,                    // int数据大小
                              parameter LONGEST_LEN = 64,
-                             parameter BYTE_SIZE = 8,
-                             parameter VECTOR_SIZE = 8,
+                             parameter BYTE_SIZE = 8,               // int数据数量
+                             parameter VECTOR_SIZE = 8,             // int数据数量
                              parameter ENTRY_INDEX_SIZE = 3,
                              parameter LANE_SIZE = 2,
                              parameter LANE_INDEX_SIZE = 1)
@@ -144,6 +144,63 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
         endcase
     end
     
+    // 各type数据
+    // 64bits
+    wire [63:0] e_byte_vs1 [VECTOR_SIZE>>1-1:0];
+    wire [63:0] e_byte_vs2 [VECTOR_SIZE>>1-1:0];
+    wire [63:0] e_byte_mask [VECTOR_SIZE>>1-1:0];
+    
+    generate
+    genvar e_i;
+    for (e_i = 0;e_i < (VECTOR_SIZE>>1);e_i = e_i + 1) begin
+        assign e_byte_vs1[e_i]  = vs1_[(e_i+1)*64-1 -: 64];
+        assign e_byte_vs2[e_i]  = vs2_[(e_i+1)*64-1 -: 64];
+        assign e_byte_mask[e_i] = mask_[(e_i+1)*64-1 -: 64];
+    end
+    endgenerate
+    
+    // 32bits
+    wire [31:0] f_byte_vs1 [VECTOR_SIZE-1:0];
+    wire [31:0] f_byte_vs2 [VECTOR_SIZE-1:0];
+    wire [31:0] f_byte_mask [VECTOR_SIZE-1:0];
+    
+    generate
+    genvar f_i;
+    for (f_i = 0;f_i < (VECTOR_SIZE>>1);f_i = f_i + 1) begin
+        assign f_byte_vs1[f_i]  = vs1_[(f_i+1)*32-1 -: 32];
+        assign f_byte_vs2[f_i]  = vs2_[(f_i+1)*32-1 -: 32];
+        assign f_byte_mask[f_i] = mask_[(f_i+1)*32-1 -: 32];
+    end
+    endgenerate
+    
+    // 16bits
+    wire [15:0] t_byte_vs1 [VECTOR_SIZE<<1-1:0];
+    wire [15:0] t_byte_vs2 [VECTOR_SIZE<<1-1:0];
+    wire [15:0] t_byte_mask [VECTOR_SIZE<<1-1:0];
+    
+    generate
+    genvar t_i;
+    for (t_i = 0;t_i < (VECTOR_SIZE>>1);t_i = t_i + 1) begin
+        assign t_byte_vs1[t_i]  = vs1_[(t_i+1)*16-1 -: 16];
+        assign t_byte_vs2[t_i]  = vs2_[(t_i+1)*16-1 -: 16];
+        assign t_byte_mask[t_i] = mask_[(t_i+1)*16-1 -: 16];
+    end
+    endgenerate
+    
+    // 8bits
+    wire [7:0] o_byte_vs1 [VECTOR_SIZE<<2-1:0];
+    wire [7:0] o_byte_vs2 [VECTOR_SIZE<<2-1:0];
+    wire [7:0] o_byte_mask [VECTOR_SIZE<<2-1:0];
+    
+    generate
+    genvar o_i;
+    for (o_i = 0;o_i < (VECTOR_SIZE>>1);o_i = o_i + 1) begin
+        assign o_byte_vs1[o_i]  = vs1_[(o_i+1)*8-1 -: 8];
+        assign o_byte_vs2[o_i]  = vs2_[(o_i+1)*8-1 -: 8];
+        assign o_byte_mask[o_i] = mask_[(o_i+1)*8-1 -: 8];
+    end
+    endgenerate
+    
     // Dispatcher
     always @(posedge clk) begin
         case (working_status)
@@ -169,16 +226,16 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
                     if (!(next + j > vector_length)) begin
                         case (current_vsew)
                             `ONE_BYTE:begin
-                                alu_result[(next+j)*8 +: 8] <= out_signals[j][7:0];
+                                alu_result[(next+j+1)*8-1 -: 8] <= out_signals[j][7:0];
                             end
                             `TWO_BYTE:begin
-                                alu_result[(next+j)*16 +: 16] <= out_signals[j][15:0];
+                                alu_result[(next+j+1)*16-1 -: 16] <= out_signals[j][15:0];
                             end
                             `FOUR_BYTE:begin
-                                alu_result[(next+j)*32 +: 32] <= out_signals[j][31:0];
+                                alu_result[(next+j+1)*32-1 -: 32] <= out_signals[j][31:0];
                             end
                             `EIGHT_BYTE:begin
-                                alu_result[(next+j)*64 +: 64] <= out_signals[j][63:0];
+                                alu_result[(next+j+1)*64-1 -: 64] <= out_signals[j][63:0];
                             end
                             default:
                             $display("[ERROR]:unexpected current vsew in vector function unit\n");
@@ -221,7 +278,45 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     end
     
     // Lanes
-    wire [LONGEST_LEN-1:0] out_signals[LANE_SIZE-1:0];
+    reg [LONGEST_LEN-1:0] in_vs1        [LANE_SIZE-1:0];
+    reg [LONGEST_LEN-1:0] in_vs2        [LANE_SIZE-1:0];
+    reg [LONGEST_LEN-1:0] in_mask       [LANE_SIZE-1:0];
+    wire [LONGEST_LEN-1:0] out_signals  [LANE_SIZE-1:0];
+    
+    always @(*) begin
+        case (previous_vsew)
+            `ONE_BYTE:begin
+                for (integer k = 0;k < LANE_SIZE;k = k + 1) begin
+                    in_vs1[k]  = {56'b0,o_byte_vs1[next+k]};
+                    in_vs2[k]  = {56'b0,o_byte_vs2[next+k]};
+                    in_mask[k] = {56'b0,o_byte_mask[next+k]};
+                end
+            end
+            `TWO_BYTE:begin
+                for (integer k = 0;k < LANE_SIZE;k = k + 1) begin
+                    in_vs1[k]  = {48'b0,t_byte_vs1[next+k]};
+                    in_vs2[k]  = {48'b0,t_byte_vs2[next+k]};
+                    in_mask[k] = {48'b0,t_byte_mask[next+k]};
+                end
+            end
+            `FOUR_BYTE:begin
+                for (integer k = 0;k < LANE_SIZE;k = k + 1) begin
+                    in_vs1[k]  = {32'b0,f_byte_vs1[next+k]};
+                    in_vs2[k]  = {32'b0,f_byte_vs2[next+k]};
+                    in_mask[k] = {32'b0,f_byte_mask[next+k]};
+                end
+            end
+            `EIGHT_BYTE:begin
+                for (integer k = 0;k < LANE_SIZE;k = k + 1) begin
+                    in_vs1[k]  = e_byte_vs1[next+k];
+                    in_vs2[k]  = e_byte_vs2[next+k];
+                    in_mask[k] = e_byte_mask[next+k];
+                end
+            end
+            default:
+            $display("[ERROR]:unexpected prev vsew in vector function unit\n");
+        endcase
+    end
     
     generate
     genvar i;
@@ -230,9 +325,9 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     .PREV_VSEW          (previous_vsew),
     .CUR_VSEW           (current_vsew),
     .vm                 (masked),
-    .vs1                (vs1_[(next+i)*LEN +: LEN]), // todo: multi data type
-    .vs2                (vs2_[(next+i)*LEN +: LEN]),
-    .mask               (mask_[(next+i)*LEN +: LEN]),
+    .vs1                (in_vs1[i]), 
+    .vs2                (in_vs2[i]),
+    .mask               (in_mask[i]),
     .imm                (imm_),
     .rs                 (rs_),
     .alu_signal         (task_type),

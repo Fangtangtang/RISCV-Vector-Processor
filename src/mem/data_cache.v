@@ -72,7 +72,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     wire [LEN*VECTOR_SIZE-1:0] _data;
     generate
     for (i = 0; i < VECTOR_SIZE; i = i + 1) begin
-        assign _data[i*LEN +: LEN] = v_data[i]; // i*LEN 计算切片的起始位置。+: 操作符表示选择从起始位置开始的连续 LEN 个位
+        assign _data[(i+1)*LEN-1 -: LEN] = v_data[i]; // (i+1)*LEN-1 计算切片的起始位置。-: 操作符表示选择从起始位置开始的连续 LEN 个位
     end
     endgenerate
     
