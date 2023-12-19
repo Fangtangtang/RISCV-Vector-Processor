@@ -122,16 +122,17 @@
 `define     VECTOR_WSUB                  6'b000101
 `define     VECTOR_ADC                   6'b000110
 `define     VECTOR_SBC                   6'b000111
-`define     VECTOR_MSBC                  6'b001000
-`define     VECTOR_MACC                  6'b001001
-`define     VECTOR_NMSAC                 6'b001010
-`define     VECTOR_MADD                  6'b001011
-`define     VECTOR_ZEXT2                 6'b001100
-`define     VECTOR_SEXT2                 6'b001101
-`define     VECTOR_ZEXT4                 6'b001110
-`define     VECTOR_SEXT4                 6'b001111
-`define     VECTOR_ZEXT8                 6'b010000
-`define     VECTOR_SEXT8                 6'b010001
+`define     VECTOR_MADC                  6'b001000
+`define     VECTOR_MSBC                  6'b001001
+`define     VECTOR_MACC                  6'b001010
+`define     VECTOR_NMSAC                 6'b001011
+`define     VECTOR_MADD                  6'b001100
+`define     VECTOR_ZEXT2                 6'b001101
+`define     VECTOR_SEXT2                 6'b001110
+`define     VECTOR_ZEXT4                 6'b001111
+`define     VECTOR_SEXT4                 6'b010000
+`define     VECTOR_ZEXT8                 6'b010001
+`define     VECTOR_SEXT8                 6'b010010
 
 // DECODE
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -224,6 +225,7 @@
 `define     V_WSUB                  6'b110011
 `define     V_ADC                   6'b010000
 `define     V_SBC                   6'b010010 // funct3 = 000
+`define     V_MADC                  6'b010001
 `define     V_MSBC                  6'b010011
 `define     V_MACC                  6'b101101
 `define     V_NMSAC                 6'b101111
