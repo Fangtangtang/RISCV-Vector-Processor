@@ -24,6 +24,7 @@ module VECTOR_ALU#(parameter ADDR_WIDTH = 17,
                    input vm,
                    input [LONGEST_LEN - 1:0] vs1,
                    input [LONGEST_LEN - 1:0] vs2,
+                   input [LONGEST_LEN - 1:0] vs3,
                    input mask,
                    input [LEN - 1:0] imm,                  // 立即数，符号位拓展
                    input [LEN - 1:0] rs,                   // 标量操作数，符号位拓展
@@ -35,37 +36,45 @@ module VECTOR_ALU#(parameter ADDR_WIDTH = 17,
     
     wire [63:0] e_byte_vs1;
     wire [63:0] e_byte_vs2;
+    wire [63:0] e_byte_vs3;
     wire [63:0] e_byte_imm;
     wire [63:0] e_byte_rs;
     assign e_byte_vs1 = vs1;
     assign e_byte_vs2 = vs2;
+    assign e_byte_vs3 = vs3;
     assign e_byte_imm = {{32{imm[31]}},imm};
     assign e_byte_rs  = {{32{rs[31]}},rs};
     
     wire [31:0] f_byte_vs1;
     wire [31:0] f_byte_vs2;
+    wire [31:0] f_byte_vs3;
     wire [31:0] f_byte_imm;
     wire [31:0] f_byte_rs;
     assign f_byte_vs1 = vs1[31:0];
     assign f_byte_vs2 = vs2[31:0];
+    assign f_byte_vs3 = vs3[31:0];
     assign f_byte_imm = imm;
     assign f_byte_rs  = rs;
     
     wire [15:0] t_byte_vs1;
     wire [15:0] t_byte_vs2;
+    wire [15:0] t_byte_vs3;
     wire [15:0] t_byte_imm;
     wire [15:0] t_byte_rs;
     assign t_byte_vs1 = vs1[15:0];
     assign t_byte_vs2 = vs2[15:0];
+    assign t_byte_vs3 = vs3[15:0];
     assign t_byte_imm = imm[15:0];
     assign t_byte_rs  = rs[15:0];
     
     wire [7:0] o_byte_vs1;
     wire [7:0] o_byte_vs2;
+    wire [7:0] o_byte_vs3;
     wire [7:0] o_byte_imm;
     wire [7:0] o_byte_rs;
     assign o_byte_vs1 = vs1[7:0];
     assign o_byte_vs2 = vs2[7:0];
+    assign o_byte_vs3 = vs3[7:0];
     assign o_byte_imm = imm[7:0];
     assign o_byte_rs  = rs[7:0];
     
@@ -225,16 +234,49 @@ module VECTOR_ALU#(parameter ADDR_WIDTH = 17,
                 end
             end
             `VECTOR_MACC:begin
-                // todo
-                
+                // vd[i] = +(vs1[i] * vs2[i]) + vd[i]
+                if (mask||vm) begin
+                    e_alu_result = e_byte_vs1 * e_byte_vs2 + e_byte_vs3;
+                    f_alu_result = f_byte_vs1 * f_byte_vs2 + f_byte_vs3;
+                    t_alu_result = t_byte_vs1 * t_byte_vs2 + t_byte_vs3;
+                    o_alu_result = o_byte_vs1 * o_byte_vs2 + o_byte_vs3;
+                end
+                else begin
+                    e_alu_result = 0;
+                    f_alu_result = 0;
+                    t_alu_result = 0;
+                    o_alu_result = 0;
+                end
             end
             `VECTOR_NMSAC:begin
-                // todo
-                
+                // vd[i] = -(vs1[i] * vs2[i]) + vd[i]
+                if (mask||vm) begin
+                    e_alu_result = e_byte_vs3 - e_byte_vs1 * e_byte_vs2;
+                    f_alu_result = f_byte_vs3 - f_byte_vs1 * f_byte_vs2;
+                    t_alu_result = t_byte_vs3 - t_byte_vs1 * t_byte_vs2;
+                    o_alu_result = o_byte_vs3 - o_byte_vs1 * o_byte_vs2;
+                end
+                else begin
+                    e_alu_result = 0;
+                    f_alu_result = 0;
+                    t_alu_result = 0;
+                    o_alu_result = 0;
+                end
             end
             `VECTOR_MADD:begin
-                // todo fsj姐姐加油！！！  --ymy
-                
+                // vd[i] = (vs1[i] * vd[i]) + vs2[i]
+                if (mask||vm) begin
+                    e_alu_result = e_byte_vs3 * e_byte_vs1 + e_byte_vs2;
+                    f_alu_result = f_byte_vs3 * f_byte_vs1 + f_byte_vs2;
+                    t_alu_result = t_byte_vs3 * t_byte_vs1 + t_byte_vs2;
+                    o_alu_result = o_byte_vs3 * o_byte_vs1 + o_byte_vs2;
+                end
+                else begin
+                    e_alu_result = 0;
+                    f_alu_result = 0;
+                    t_alu_result = 0;
+                    o_alu_result = 0;
+                end
             end
             `VECTOR_ZEXT2:begin
                 // Zero-extend SEW/2 source to SEW destination
