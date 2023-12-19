@@ -11,6 +11,8 @@
 // |
 // | + Recaller
 // |     收束，把数据收到一个result里面
+// 
+// - todo: is mask operation: 结果为1bit
 // #############################################################################################################################
 `include "src/defines.v"
 `include "src/funct_unit/vector_alu.v"
@@ -55,6 +57,7 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     reg [2:0] task_type;
     reg [1:0] operand_type;
     reg [5:0] alu_opcode;
+    reg is_mask_operation;
     reg [1:0] working_status;
     
     reg [ENTRY_INDEX_SIZE:0] next;          // 下一周期起始index
@@ -62,63 +65,92 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     reg [VECTOR_SIZE*LEN - 1:0] alu_result;
     
     reg [5:0] opcode;
+    reg is_mask_op;
     reg [2:0] vsew;
     always @(*) begin
         case (funct6)
             `V_ADD:begin
-                opcode = `VECTOR_ADD;
-                vsew   = VSEW;
+                opcode     = `VECTOR_ADD;
+                vsew       = VSEW;
+                is_mask_op = `FALSE;
             end
             `V_SUB:begin
-                opcode = `VECTOR_SUB;
-                vsew   = VSEW;
+                opcode     = `VECTOR_SUB;
+                vsew       = VSEW;
+                is_mask_op = `FALSE;
             end
             `V_WADDU:begin
-                opcode = `VECTOR_WADDU;
+                opcode     = `VECTOR_WADDU;
+                vsew       = VSEW << 1;
+                is_mask_op = `FALSE;
             end
             `V_WSUBU:begin
-                opcode = `VECTOR_WSUBU;
+                opcode     = `VECTOR_WSUBU;
+                vsew       = VSEW << 1;
+                is_mask_op = `FALSE;
             end
             `V_WADD:begin
-                opcode = `VECTOR_WADD;
+                opcode     = `VECTOR_WADD;
+                vsew       = VSEW << 1;
+                is_mask_op = `FALSE;
             end
             `V_WSUB:begin
-                opcode = `VECTOR_WSUB;
+                opcode     = `VECTOR_WSUB;
+                vsew       = VSEW << 1;
+                is_mask_op = `FALSE;
             end
             `V_ADC:begin
-                opcode = `VECTOR_ADC;
+                opcode     = `VECTOR_ADC;
+                vsew       = VSEW;
+                is_mask_op = `FALSE;
             end
             `V_SBC:begin
                 if (vec_operand_type == `OPIVV)begin
-                    opcode = `VECTOR_SBC;
+                    opcode     = `VECTOR_SBC;
+                    vsew       = VSEW;
+                    is_mask_op = `FALSE;
                 end
             end
             `V_MADC:begin
-                opcode = `VECTOR_MADC;
+                opcode     = `VECTOR_MADC;
+                vsew       = VSEW;
+                is_mask_op = `TRUE;
             end
             `V_MSBC:begin
-                opcode = `VECTOR_MSBC;
+                opcode     = `VECTOR_MSBC;
+                vsew       = VSEW;
+                is_mask_op = `TRUE;
             end
             `V_MACC:begin
-                opcode = `VECTOR_MACC;
+                opcode     = `VECTOR_MACC;
+                vsew       = VSEW;
+                is_mask_op = `FALSE;
             end
             `V_NMSAC:begin
-                opcode = `VECTOR_NMSAC;
+                opcode     = `VECTOR_NMSAC;
+                vsew       = VSEW;
+                is_mask_op = `FALSE;
             end
             `V_MADD:begin
-                opcode = `VECTOR_MADD;
+                opcode     = `VECTOR_MADD;
+                vsew       = VSEW;
+                is_mask_op = `FALSE;
             end
             `V_ZEXT:begin
                 if (vec_operand_type == `OPMVV)begin
+                    is_mask_op = `FALSE;
                     case (ext_type)
                         `ZEXT2:begin
                             opcode = `VECTOR_ZEXT2;
+                            vsew   = VSEW << 1;
                         end
                         `ZEXT4:begin
                             opcode = `VECTOR_ZEXT4;
+                            vsew   = VSEW << 2;
                         end
                         `ZEXT8:begin
                             opcode = `VECTOR_ZEXT8;
+                            vsew   = VSEW << 3;
                         end
                         default:
                         $display("[ERROR]:unexpected zext type in vector function unit\n");
@@ -127,15 +159,19 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
             end
             `V_SEXT:begin
                 if (vec_operand_type == `OPMVV)begin
+                    is_mask_op = `FALSE;
                     case (ext_type)
                         `SEXT2:begin
                             opcode = `VECTOR_SEXT2;
+                            vsew   = VSEW << 1;
                         end
                         `SEXT4:begin
                             opcode = `VECTOR_SEXT4;
+                            vsew   = VSEW << 2;
                         end
                         `SEXT8:begin
                             opcode = `VECTOR_SEXT8;
+                            vsew   = VSEW << 3;
                         end
                         default:
                         $display("[ERROR]:unexpected sext type in vector function unit\n");
@@ -155,8 +191,8 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     generate
     genvar e_i;
     for (e_i = 0;e_i < (VECTOR_SIZE>>1);e_i = e_i + 1) begin
-        assign e_byte_vs1[e_i]  = vs1_[(e_i+1)*64-1 -: 64];
-        assign e_byte_vs2[e_i]  = vs2_[(e_i+1)*64-1 -: 64];
+        assign e_byte_vs1[e_i] = vs1_[(e_i+1)*64-1 -: 64];
+        assign e_byte_vs2[e_i] = vs2_[(e_i+1)*64-1 -: 64];
     end
     endgenerate
     
@@ -167,8 +203,8 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     generate
     genvar f_i;
     for (f_i = 0;f_i < (VECTOR_SIZE>>1);f_i = f_i + 1) begin
-        assign f_byte_vs1[f_i]  = vs1_[(f_i+1)*32-1 -: 32];
-        assign f_byte_vs2[f_i]  = vs2_[(f_i+1)*32-1 -: 32];
+        assign f_byte_vs1[f_i] = vs1_[(f_i+1)*32-1 -: 32];
+        assign f_byte_vs2[f_i] = vs2_[(f_i+1)*32-1 -: 32];
     end
     endgenerate
     
@@ -179,8 +215,8 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     generate
     genvar t_i;
     for (t_i = 0;t_i < (VECTOR_SIZE>>1);t_i = t_i + 1) begin
-        assign t_byte_vs1[t_i]  = vs1_[(t_i+1)*16-1 -: 16];
-        assign t_byte_vs2[t_i]  = vs2_[(t_i+1)*16-1 -: 16];
+        assign t_byte_vs1[t_i] = vs1_[(t_i+1)*16-1 -: 16];
+        assign t_byte_vs2[t_i] = vs2_[(t_i+1)*16-1 -: 16];
     end
     endgenerate
     
@@ -191,8 +227,8 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     generate
     genvar o_i;
     for (o_i = 0;o_i < (VECTOR_SIZE>>1);o_i = o_i + 1) begin
-        assign o_byte_vs1[o_i]  = vs1_[(o_i+1)*8-1 -: 8];
-        assign o_byte_vs2[o_i]  = vs2_[(o_i+1)*8-1 -: 8];
+        assign o_byte_vs1[o_i] = vs1_[(o_i+1)*8-1 -: 8];
+        assign o_byte_vs2[o_i] = vs2_[(o_i+1)*8-1 -: 8];
     end
     endgenerate
     
@@ -201,40 +237,47 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
         case (working_status)
             `VEC_ALU_NOP:begin
                 if (execute&&length > 0) begin
-                    previous_vsew  <= VSEW;
-                    masked         <= vm;
-                    vector_length  <= length;
-                    vs1_           <= vs1;
-                    vs2_           <= vs2;
-                    mask_          <= mask;
-                    imm_           <= imm;
-                    rs_            <= rs;
-                    task_type      <= alu_signal;
-                    operand_type   <= vec_operand_type;
-                    alu_opcode     <= opcode;
-                    current_vsew   <= vsew;
-                    working_status <= `VEC_ALU_WORKING;
+                    previous_vsew     <= VSEW;
+                    masked            <= vm;
+                    vector_length     <= length;
+                    vs1_              <= vs1;
+                    vs2_              <= vs2;
+                    mask_             <= mask;
+                    imm_              <= imm;
+                    rs_               <= rs;
+                    task_type         <= alu_signal;
+                    operand_type      <= vec_operand_type;
+                    alu_opcode        <= opcode;
+                    is_mask_operation <= is_mask_op;
+                    current_vsew      <= vsew;
+                    working_status    <= `VEC_ALU_WORKING;
                 end
             end
             `VEC_ALU_WORKING:begin
                 for (integer j = 0;j < LANE_SIZE;j = j + 1) begin
                     if (!(next + j > vector_length)) begin
-                        case (current_vsew)
-                            `ONE_BYTE:begin
-                                alu_result[(next+j+1)*8-1 -: 8] <= out_signals[j][7:0];
-                            end
-                            `TWO_BYTE:begin
-                                alu_result[(next+j+1)*16-1 -: 16] <= out_signals[j][15:0];
-                            end
-                            `FOUR_BYTE:begin
-                                alu_result[(next+j+1)*32-1 -: 32] <= out_signals[j][31:0];
-                            end
-                            `EIGHT_BYTE:begin
-                                alu_result[(next+j+1)*64-1 -: 64] <= out_signals[j][63:0];
-                            end
-                            default:
-                            $display("[ERROR]:unexpected current vsew in vector function unit\n");
-                        endcase
+                        // mask operation result
+                        if (is_mask_operation)begin
+                            alu_result[(next+j+1)-1 -: 1] <= out_signals[j][0:0];
+                        end
+                        else begin
+                            case (current_vsew)
+                                `ONE_BYTE:begin
+                                    alu_result[(next+j+1)*8-1 -: 8] <= out_signals[j][7:0];
+                                end
+                                `TWO_BYTE:begin
+                                    alu_result[(next+j+1)*16-1 -: 16] <= out_signals[j][15:0];
+                                end
+                                `FOUR_BYTE:begin
+                                    alu_result[(next+j+1)*32-1 -: 32] <= out_signals[j][31:0];
+                                end
+                                `EIGHT_BYTE:begin
+                                    alu_result[(next+j+1)*64-1 -: 64] <= out_signals[j][63:0];
+                                end
+                                default:
+                                $display("[ERROR]:unexpected current vsew in vector function unit\n");
+                            endcase
+                        end
                     end
                 end
                 if (next + LANE_SIZE<vector_length) begin
@@ -248,20 +291,21 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
             end
             `VEC_ALU_FINISHED:begin
                 if (execute&&length > 0) begin
-                    previous_vsew  <= VSEW;
-                    masked         <= vm;
-                    vector_length  <= length;
-                    vs1_           <= vs1;
-                    vs2_           <= vs2;
-                    mask_          <= mask;
-                    imm_           <= imm;
-                    rs_            <= rs;
-                    task_type      <= alu_signal;
-                    operand_type   <= vec_operand_type;
-                    alu_opcode     <= opcode;
-                    current_vsew   <= vsew;
-                    working_status <= `VEC_ALU_WORKING;
-                    next           <= 0;
+                    previous_vsew     <= VSEW;
+                    masked            <= vm;
+                    vector_length     <= length;
+                    vs1_              <= vs1;
+                    vs2_              <= vs2;
+                    mask_             <= mask;
+                    imm_              <= imm;
+                    rs_               <= rs;
+                    task_type         <= alu_signal;
+                    operand_type      <= vec_operand_type;
+                    alu_opcode        <= opcode;
+                    is_mask_operation <= is_mask_op;
+                    current_vsew      <= vsew;
+                    working_status    <= `VEC_ALU_WORKING;
+                    next              <= 0;
                 end
                 else begin
                     working_status <= `VEC_ALU_NOP;
@@ -322,6 +366,7 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     .rs                 (rs_),
     .alu_signal         (task_type),
     .vec_operand_type   (operand_type),
+    .is_mask_operation  (is_mask_operation),
     .opcode             (alu_opcode),
     .result             (out_signals[i])
     );

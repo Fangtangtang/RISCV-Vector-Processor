@@ -7,6 +7,8 @@
 // - instruction decode阶段读取数据（输出完整向量，即使部分invalid）
 // - write back阶段向rd写（仅写length个，其余不变）
 // - v0 also used as mask register
+// 
+// todo: write back with "mask"?
 // #############################################################################################################################
 `include"src/defines.v"
 
