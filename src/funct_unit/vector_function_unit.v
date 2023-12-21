@@ -42,6 +42,7 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
                              input [1:0] vec_operand_type,
                              input [4:0] ext_type,
                              input [5:0] funct6,
+                             output is_mask,
                              output [VECTOR_SIZE*LEN - 1:0] result,
                              output [1:0] vector_alu_status);
     
@@ -392,6 +393,7 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     endgenerate
     
     // Recaller
+    assign is_mask           = is_mask_operation;
     assign result            = alu_result;
     assign vector_alu_status = working_status;
     
