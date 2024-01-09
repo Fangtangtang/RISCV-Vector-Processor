@@ -25,7 +25,7 @@ _no_testcase_name_check:
 # complie $(sim)/my_tb.v and related files under common
 # if compile all the files, include not needed
 build_sim:
-	@ iverilog -o $(testspace)/test $(sim)/my_modified_tb.v 
+	@ iverilog -o $(testspace)/test $(sim)/testbench.v 
 
 
 build_sim_test: _no_testcase_name_check
