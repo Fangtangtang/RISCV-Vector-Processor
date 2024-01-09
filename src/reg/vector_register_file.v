@@ -28,7 +28,7 @@ module VECTOR_REGISTER_FILE#(parameter ADDR_WIDTH = 17,
                              input vm,
                              input [VECTOR_SIZE*LEN - 1:0] mask,
                              input [VECTOR_SIZE*LEN - 1:0] data,      // write back data
-                             input [ENTRY_INDEX_SIZE:0] length,
+                             input [LEN-1:0] length,
                              input [2:0] data_type,
                              input write_back_enabled,
                              output [VECTOR_SIZE*LEN - 1:0] v0_data,
