@@ -95,6 +95,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     reg [4:0]                   ID_EXE_EXT_TYPE;
     reg [5:0]                   ID_EXE_FUNCT6;
     
+    reg                         ID_EXE_IS_VEC_INST;
     reg [2:0]                   ID_EXE_ALU_SIGNAL;        // ALU信号
     reg [1:0]                   ID_EXE_MEM_VIS_SIGNAL;    // 访存信号
     reg [1:0]                   ID_EXE_MEM_VIS_DATA_SIZE; // todo:scalar?
@@ -120,6 +121,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     reg [4:0]                   EXE_MEM_RD_INDEX;           // 记录的rd位置
     reg [3:0]                   EXE_MEM_FUNC_CODE;
     
+    reg                         EXE_MEM_IS_VEC_INST;
     reg                         EXE_MEM_OP_ON_MASK;            // 是对mask的操作
     reg [1:0]                   EXE_MEM_MEM_VIS_SIGNAL;
     reg [1:0]                   EXE_MEM_MEM_VIS_DATA_SIZE;
@@ -131,10 +133,11 @@ module CORE#(parameter ADDR_WIDTH = 17,
     
     reg [LEN-1:0]               MEM_WB_MEM_SCALAR_DATA;     // 从内存读取的scalar数据
     reg [VECTOR_SIZE*LEN - 1:0] MEM_WB_MEM_VECTOR_DATA;     // 从内存读取的vector数据
+    reg [VECTOR_SIZE*LEN - 1:0] MEM_WB_MASK;
     reg [LEN-1:0]               MEM_WB_SCALAR_RESULT;       // scalar计算结果
     reg [VECTOR_SIZE*LEN - 1:0] MEM_WB_VECTOR_RESULT;       // vector计算结果
     
-    reg                         EXE_WB_VM;
+    reg                         MEM_WB_VM;
     reg [31:0]                  MEM_WB_VL;
     reg [31:0]                  MEM_WB_VTYPE;
     wire [2:0]                  MEM_WB_VSEW  = MEM_WB_VTYPE[5:3];
@@ -142,6 +145,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     
     reg [4:0]                   MEM_WB_RD_INDEX;
     
+    reg                         MEM_WB_IS_VEC_INST;
     reg                         MEM_WB_OP_ON_MASK;            // 是对mask的操作
     reg [1:0]                   MEM_WB_WB_SIGNAL;
     
@@ -213,6 +217,9 @@ module CORE#(parameter ADDR_WIDTH = 17,
     reg [LEN-1:0]           scalar_rf_reg_write_data;
     wire                    scalar_rf_write_back_enabled;
     
+    assign  scalar_rf_rf_signal          = (WB_STATE_CTR&&scalar_rb_flag)? `SCALAR_RF_WRITE:`RF_NOP;
+    assign  scalar_rf_write_back_enabled = WB_STATE_CTR;
+    
     // outports wire
     wire [LEN-1:0] 	        scalar_rf_rs1_data;
     wire [LEN-1:0] 	        scalar_rf_rs2_data;
@@ -243,9 +250,11 @@ module CORE#(parameter ADDR_WIDTH = 17,
     // VECTOR REGISTER FILE
     // inports wire
     wire [1:0]                  vector_rf_rf_signal;
-    wire [VECTOR_SIZE*LEN-1:0] 	vector_rf_mask;         // mask bits in v0
     reg [VECTOR_SIZE*LEN-1:0]   vector_rf_reg_write_data;
     wire                        vector_rf_write_back_enabled;
+    
+    assign  vector_rf_rf_signal          = (WB_STATE_CTR&&vector_rb_flag)? `VECTOR_RF_WRITE:`RF_NOP;
+    assign  vector_rf_write_back_enabled = WB_STATE_CTR;
     
     // outports wire
     wire [VECTOR_SIZE*LEN-1:0] 	vector_rf_v0_data;
@@ -271,7 +280,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     .rs3                	(decoder_reg3_index),
     .rd                 	(MEM_WB_RD_INDEX),
     .vm                 	(MEM_WB_VM),
-    .mask               	(vector_rf_mask),
+    .mask               	(MEM_WB_MASK),
     .data               	(vector_rf_reg_write_data),
     .length             	(MEM_WB_VL),
     .data_type          	(MEM_WB_VSEW),
@@ -311,6 +320,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     localparam LANE_INDEX_SIZE = 1;
     // inports wire
     wire                        vector_function_unit_execute;
+    assign vector_function_unit_execute = ID_EXE_IS_VEC_INST;
     // outports wire
     wire                       	vector_function_unit_is_mask;
     wire [VECTOR_SIZE*LEN-1:0] 	vector_function_unit_result;
@@ -364,6 +374,304 @@ module CORE#(parameter ADDR_WIDTH = 17,
         end
         else
             chip_enabled <= 0;
+    end
+    
+    // STAGE1 : INSTRUCTION FETCH
+    // - memory visit取指令
+    // - 更新transfer register的PC
+    // ---------------------------------------------------------------------------------------------
+    
+    always @(posedge clk) begin
+        if (rdy_in) begin
+            if (chip_enabled&&start_cpu) begin
+                if (IF_STATE_CTR) begin
+                    IF_ID_PC <= PC;
+                end
+                // IF没有结束，向下加stall
+                if (mem_vis_status == `IF_FINISHED) begin
+                    ID_STATE_CTR <= 1;
+                end
+                else begin
+                    ID_STATE_CTR <= 0;
+                end
+            end
+            else begin
+                PC = 0;
+            end
+        end
+    end
+    
+    // STAGE2 : INSTRUCTION DECODE
+    // - decoder解码
+    // - 访问register file取值
+    // ---------------------------------------------------------------------------------------------
+    
+    always @(posedge clk) begin
+        if ((!rst)&&rdy_in&&start_cpu) begin
+            if (ID_STATE_CTR) begin
+                ID_EXE_PC <= IF_ID_PC;
+                
+                ID_EXE_RS1  <= scalar_rf_rs1_data;
+                ID_EXE_RS2  <= scalar_rf_rs2_data;
+                ID_EXE_MASK <= vector_rf_v0_data;
+                ID_EXE_VS1  <= vector_rf_rs1_data;
+                ID_EXE_VS2  <= vector_rf_rs2_data;
+                ID_EXE_VS3  <= vector_rf_rs3_data;
+                
+                ID_EXE_VM    <= decoder_vm;
+                ID_EXE_VL    <= VL;
+                ID_EXE_VTYPE <= VTYPE;
+                
+                ID_EXE_IMM              <= decoder_zimm;
+                ID_EXE_RD_INDEX         <= decoder_reg3_index;
+                ID_EXE_FUNC_CODE        <= decoder_output_func_code;
+                ID_EXE_VEC_OPERAND_TYPE <= decoder_output_vec_operand_type;
+                ID_EXE_EXT_TYPE         <= decoder_reg1_index;
+                ID_EXE_FUNCT6           <= decoder_output_func6;
+                
+                ID_EXE_IS_VEC_INST       <= decoder_is_vector_instruction;
+                ID_EXE_ALU_SIGNAL        <= decoder_output_exe_signal;
+                ID_EXE_MEM_VIS_SIGNAL    <= decoder_output_mem_vis_signal;
+                ID_EXE_MEM_VIS_DATA_SIZE <= decoder_output_data_size;
+                ID_EXE_BRANCH_SIGNAL     <= decoder_output_branch_signal;
+                ID_EXE_WB_SIGNAL         <= decoder_output_wb_signal;
+                
+                EXE_STATE_CTR <= 1;
+            end
+            else begin
+                EXE_STATE_CTR <= 0;
+            end
+        end
+    end
+    
+    // STAGE3 : EXECUTE
+    // - alu执行运算
+    // scalar 和 vector运行需要时间的差距
+    // ---------------------------------------------------------------------------------------------
+    always @(posedge clk) begin
+        if ((!rst)&&rdy_in&&start_cpu)begin
+            // 标量指令
+            if (EXE_STATE_CTR && !ID_EXE_IS_VEC_INST) begin
+                EXE_MEM_PC <= ID_EXE_PC;
+                
+                EXE_MEM_SCALAR_RESULT <= scalar_alu_result;
+                EXE_MEM_ZERO_BITS     <= scalar_alu_sign_bits;
+                EXE_MEM_RS2           <= ID_EXE_RS2;
+                
+                EXE_MEM_IMM       <= ID_EXE_IMM;
+                EXE_MEM_RD_INDEX  <= ID_EXE_RD_INDEX;
+                EXE_MEM_FUNC_CODE <= ID_EXE_FUNC_CODE;
+                
+                EXE_MEM_IS_VEC_INST       <= ID_EXE_IS_VEC_INST;
+                EXE_MEM_MEM_VIS_SIGNAL    <= ID_EXE_MEM_VIS_SIGNAL;
+                EXE_MEM_MEM_VIS_DATA_SIZE <= ID_EXE_MEM_VIS_DATA_SIZE;
+                EXE_MEM_WB_SIGNAL         <= ID_EXE_WB_SIGNAL;
+                
+                MEM_STATE_CTR <= 1;
+            end
+            else begin
+                // 要做向量运算
+                if (EXE_STATE_CTR) begin
+                    if (vector_function_unit_vector_alu_status == `VEC_ALU_NOP) begin
+                        // 更新transfer register
+                        EXE_MEM_PC <= ID_EXE_PC;
+                        
+                        EXE_MEM_MASK <= ID_EXE_MASK;
+                        
+                        EXE_MEM_VM    <= ID_EXE_VM;
+                        EXE_MEM_VL    <= ID_EXE_VL;
+                        EXE_MEM_VTYPE <= ID_EXE_VTYPE;
+                        
+                        EXE_MEM_IMM       <= ID_EXE_IMM;
+                        EXE_MEM_RD_INDEX  <= ID_EXE_RD_INDEX;
+                        EXE_MEM_FUNC_CODE <= ID_EXE_FUNC_CODE;
+                        
+                        EXE_MEM_IS_VEC_INST       <= ID_EXE_IS_VEC_INST;
+                        EXE_MEM_MEM_VIS_SIGNAL    <= ID_EXE_MEM_VIS_SIGNAL;
+                        EXE_MEM_MEM_VIS_DATA_SIZE <= ID_EXE_MEM_VIS_DATA_SIZE;
+                        EXE_MEM_BRANCH_SIGNAL     <= ID_EXE_BRANCH_SIGNAL;
+                        EXE_MEM_WB_SIGNAL         <= ID_EXE_WB_SIGNAL;
+                    end
+                end
+                // 所有向量计算完成
+                if (vector_function_unit_vector_alu_status == `VEC_ALU_FINISHED) begin
+                    // 记录结果
+                    EXE_MEM_VECTOR_RESULT <= vector_function_unit_result;
+                    EXE_MEM_OP_ON_MASK    <= vector_function_unit_is_mask;
+                    
+                    MEM_STATE_CTR <= 1;
+                end
+                else begin
+                    MEM_STATE_CTR <= 0;
+                end
+            end
+        end
+    end
+    
+    // STAGE4 : MEMORY VISIT
+    // - visit memory
+    // - pc update
+    // ---------------------------------------------------------------------------------------------
+    reg [LEN-1:0] increased_pc;
+    reg [LEN-1:0] special_pc;
+    
+    reg branch_flag;
+    
+    // branch
+    always @(*) begin
+        if (EXE_MEM_BRANCH_SIGNAL == `CONDITIONAL) begin
+            case (EXE_MEM_FUNC_CODE[2:0])
+                3'b000:begin
+                    if (EXE_MEM_ZERO_BITS == `ZERO) begin
+                        branch_flag = 1;
+                    end
+                    else begin
+                        branch_flag = 0;
+                    end
+                end
+                3'b001:begin
+                    if (EXE_MEM_ZERO_BITS == `ZERO) begin
+                        branch_flag = 0;
+                    end
+                    else begin
+                        branch_flag = 1;
+                    end
+                end
+                default:
+                $display("[ERROR]:unexpected branch instruction\n");
+            endcase
+        end
+        else if (EXE_MEM_BRANCH_SIGNAL == `NOT_BRANCH) begin
+            branch_flag = 0;
+        end
+        else begin
+            branch_flag = 1;
+        end
+    end
+    
+    always @(*) begin
+        increased_pc = EXE_MEM_PC + 4;
+        if (EXE_MEM_BRANCH_SIGNAL == `UNCONDITIONAL_RESULT) begin
+            special_pc = EXE_MEM_SCALAR_RESULT &~ 1;
+        end
+        else begin
+            special_pc = EXE_MEM_PC + EXE_MEM_IMM;
+        end
+    end
+    
+    reg mem_working_on_vector;
+    
+    // memory visit
+    always @(posedge clk) begin
+        if ((!rst)&&rdy_in&&start_cpu) begin
+            if (MEM_STATE_CTR) begin
+                if (mem_vis_status == `D_CACHE_RESTING) begin
+                    // update pc
+                    if (branch_flag) begin
+                        PC <= special_pc;
+                    end
+                    else begin
+                        PC <= increased_pc;
+                    end
+                    MEM_WB_PC <= EXE_MEM_PC;
+                    
+                    MEM_WB_RD_INDEX <= EXE_MEM_RD_INDEX;
+                    
+                    MEM_WB_IS_VEC_INST <= EXE_MEM_IS_VEC_INST;
+                    MEM_WB_WB_SIGNAL   <= EXE_MEM_WB_SIGNAL;
+                    
+                    if (EXE_MEM_IS_VEC_INST) begin
+                        // 向量load/store
+                        mem_working_on_vector <= `TRUE;
+                        
+                        MEM_WB_MASK          <= EXE_MEM_MASK;
+                        MEM_WB_VECTOR_RESULT <= EXE_MEM_VECTOR_RESULT;
+                        
+                        MEM_WB_VM    <= EXE_MEM_VM;
+                        MEM_WB_VL    <= EXE_MEM_VL;
+                        MEM_WB_VTYPE <= EXE_MEM_VTYPE;
+                        
+                        MEM_WB_OP_ON_MASK <= EXE_MEM_OP_ON_MASK;
+                    end
+                    else begin
+                        // 标量load/store
+                        mem_working_on_vector <= `FALSE;
+                        MEM_WB_SCALAR_RESULT  <= EXE_MEM_SCALAR_RESULT;
+                    end
+                end
+            end
+            
+            if (mem_vis_status == `L_S_FINISHED) begin
+                if (mem_working_on_vector) begin
+                    // 向量
+                    MEM_WB_MEM_VECTOR_DATA <= mem_read_vector_data;
+                end
+                else begin
+                    // 标量
+                    MEM_WB_MEM_SCALAR_DATA <= mem_read_scalar_data;
+                end
+                WB_STATE_CTR <= 1;
+            end
+            else begin
+                WB_STATE_CTR <= 0;
+            end
+        end
+    end
+    
+    // STAGE5 : WRITE BACK
+    // - write back to register
+    // ---------------------------------------------------------------------------------------------
+    // 标量
+    reg scalar_rb_flag;
+    
+    always @(*) begin
+        case (MEM_WB_WB_SIGNAL)
+            `MEM_TO_REG:begin
+                scalar_rf_reg_write_data = MEM_WB_MEM_SCALAR_DATA;
+                scalar_rb_flag           = 1;
+            end
+            `ARITH:begin
+                scalar_rf_reg_write_data = MEM_WB_SCALAR_RESULT;
+                scalar_rb_flag           = 1;
+            end
+            `INCREASED_PC:begin
+                scalar_rf_reg_write_data = 4 + MEM_WB_PC;
+                scalar_rb_flag           = 1;
+            end
+            `WB_NOP:begin
+                scalar_rb_flag = 0;
+            end
+        endcase
+    end
+    
+    // 向量
+    reg vector_rb_flag;
+    
+    always @(*) begin
+        case (MEM_WB_WB_SIGNAL)
+            `MEM_TO_REG:begin
+                vector_rf_reg_write_data = MEM_WB_MEM_VECTOR_DATA;
+                vector_rb_flag           = 1;
+            end
+            `ARITH:begin
+                vector_rf_reg_write_data = MEM_WB_VECTOR_RESULT;
+                vector_rb_flag           = 1;
+            end
+            `WB_NOP:begin
+                vector_rb_flag = 0;
+            end
+        endcase
+    end
+    
+    always @(posedge clk) begin
+        if ((!rst)&&rdy_in&&start_cpu)begin
+            if (scalar_rf_rf_status == `RF_FINISHED||vector_rf_rf_status == `RF_FINISHED) begin
+                IF_STATE_CTR <= 1;
+            end
+            else begin
+                IF_STATE_CTR <= 0;
+            end
+        end
     end
     
 endmodule

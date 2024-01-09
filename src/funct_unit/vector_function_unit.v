@@ -13,6 +13,7 @@
 // |     收束，把数据收到一个result里面
 // 
 // - todo: is mask operation: 结果为1bit
+// - todo: 提前结束store这类的alu时间？
 // #############################################################################################################################
 `include "src/defines.v"
 `include "src/funct_unit/vector_alu.v"
@@ -247,7 +248,7 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     always @(posedge clk) begin
         case (working_status)
             `VEC_ALU_NOP:begin
-                if (execute&&length > 0) begin
+                if (execute && length > 0) begin
                     previous_vsew     <= VSEW;
                     masked            <= vm;
                     vector_length     <= length;
@@ -302,7 +303,7 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
                 end
             end
             `VEC_ALU_FINISHED:begin
-                if (execute&&length > 0) begin
+                if (execute && length > 0) begin
                     previous_vsew     <= VSEW;
                     masked            <= vm;
                     vector_length     <= length;
