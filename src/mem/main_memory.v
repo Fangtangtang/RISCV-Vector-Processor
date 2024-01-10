@@ -18,7 +18,8 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
                     input [ADDR_WIDTH-1:0] d_cache_mem_vis_addr,
                     input [ENTRY_INDEX_SIZE:0] length,
                     input [LEN-1:0] written_data,
-                    output [LEN-1:0] mem_data,
+                    input [2:0] data_type,
+                    output [LEN-1:0] mem_data,                   
                     output reg [1:0] mem_status);
     
     reg [BYTE_SIZE-1:0] storage [0:2**ADDR_WIDTH-1];
@@ -65,10 +66,23 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
                     CNT        <= CNT + 1;
                     mem_status <= `MEM_DATA_WORKING;
                 end
-                storage[d_cache_mem_vis_addr]   <= written_data[31:24];
-                storage[d_cache_mem_vis_addr+1] <= written_data[23:16];
-                storage[d_cache_mem_vis_addr+2] <= written_data[15:8];
-                storage[d_cache_mem_vis_addr+3] <= written_data[7:0];
+                case (data_type)
+                    `ONE_BYTE:begin
+                        storage[d_cache_mem_vis_addr] <= written_data[31:24];
+                    end
+                    `TWO_BYTE:begin
+                        storage[d_cache_mem_vis_addr]   <= written_data[31:24];
+                        storage[d_cache_mem_vis_addr+1] <= written_data[23:16];
+                    end
+                    `FOUR_BYTE:begin
+                        storage[d_cache_mem_vis_addr]   <= written_data[31:24];
+                        storage[d_cache_mem_vis_addr+1] <= written_data[23:16];
+                        storage[d_cache_mem_vis_addr+2] <= written_data[15:8];
+                        storage[d_cache_mem_vis_addr+3] <= written_data[7:0];
+                    end
+                    default:
+                    $display("[ERROR]:unexpected data type in main memory\n");
+                endcase
             end
             `MEM_READ_BURST:begin
                 if (CNT == 0) begin

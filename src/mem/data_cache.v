@@ -21,8 +21,8 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                    parameter CACHE_INDEX_SIZE = 4)
                   (input wire clk,
                    input [ADDR_WIDTH-1:0] data_addr,
-                   input [2:0] data_type,
-                   input [LEN-1:0] cache_writen_data,
+                   input [2:0] data_type,                    // vsew
+                   input [LEN-1:0] cache_written_data,
                    input [1:0] cache_vis_signal,
                    input [ENTRY_INDEX_SIZE:0] length,        // 1：单个
                    output cache_hit,
@@ -30,7 +30,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                    output reg [1:0] d_cache_vis_status,
                    input [LEN-1:0] mem_data,
                    input [1:0] mem_status,
-                   output reg [LEN-1:0] mem_writen_data,
+                   output reg [LEN-1:0] mem_written_data,
                    output reg [2:0] written_data_type,
                    output [ENTRY_INDEX_SIZE:0] write_length, // 1：单个
                    output [ADDR_WIDTH-1:0] mem_vis_addr,     // 访存地址
@@ -57,8 +57,11 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     // 全字
     wire word_hit = valid[cache_line_index]&&tag[cache_line_index] == addr_tag&&(select_bit+3<CACHE_LINE_SIZE|| tag[(cache_line_index+1)%CACHE_SIZE] == addr_tag);
     // 如果所要的数据都有，hit
-    wire hit         = (data_type == `BYTE&&byte_hit)||(data_type == `HALF&&half_word_hit)||(data_type == `WORD&&word_hit);
+    // todo:EIGHT_BYTE
+    wire hit         = (data_type == `ONE_BYTE&&byte_hit)||(data_type == `TWO_BYTE&&half_word_hit)||(data_type == `FOUR_BYTE&&word_hit);
     assign cache_hit = hit;
+    
+    assign write_length = length;
     
     // 接线取数据（从请求地址开始取字节，转为正常顺序）
     reg [LEN-1:0]              direct_data;
@@ -102,14 +105,14 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     
     always @(*) begin
         case(data_type)
-            `BYTE:begin
-                direct_data = {direct_byte,24'b0};
+            `ONE_BYTE:begin
+                direct_data = {24'b0,direct_byte};
             end
-            `HALF:begin
-                direct_data = {direct_half_word,16'b0};
+            `TWO_BYTE:begin
+                direct_data = {16'b0,direct_half_word[BYTE_SIZE-1:0],direct_half_word[2*BYTE_SIZE-1:BYTE_SIZE]};
             end
-            `WORD:begin
-                direct_data = direct_word;
+            `FOUR_BYTE:begin
+                direct_data = {direct_word[BYTE_SIZE-1:0],direct_word[2*BYTE_SIZE-1:BYTE_SIZE],direct_word[3*BYTE_SIZE-1:2*BYTE_SIZE],direct_word[4*BYTE_SIZE-1:3*BYTE_SIZE]};
             end
             default:
             $display("[ERROR]:unexpected data type in data cache\n");
@@ -145,17 +148,35 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     
     always @(*) begin
         case(requested_data_type)
-            `BYTE:begin
-                indirect_data = {indirect_byte,24'b0};
+            `ONE_BYTE:begin
+                indirect_data = {24'b0,indirect_byte};
             end
-            `HALF:begin
-                indirect_data = {indirect_half_word,16'b0};
+            `TWO_BYTE:begin
+                indirect_data = {16'b0,indirect_half_word[BYTE_SIZE-1:0],indirect_half_word[2*BYTE_SIZE-1:BYTE_SIZE]};
             end
-            `WORD:begin
-                indirect_data = indirect_word;
+            `FOUR_BYTE:begin
+                indirect_data = {indirect_word[BYTE_SIZE-1:0],indirect_word[2*BYTE_SIZE-1:BYTE_SIZE],indirect_word[3*BYTE_SIZE-1:2*BYTE_SIZE],indirect_word[4*BYTE_SIZE-1:3*BYTE_SIZE]};
             end
             default:
             $display("[ERROR]:unexpected requested data type in data cache\n");
+        endcase
+    end
+    
+    // 转为内存顺序的数据
+    reg [LEN-1:0] written_data;
+    always @(*) begin
+        case(requested_data_type)
+            `ONE_BYTE:begin
+                written_data = {cache_written_data[7:0],24'b0};
+            end
+            `TWO_BYTE:begin
+                written_data = {cache_written_data[7:0],cache_written_data[15:8],16'b0};
+            end
+            `FOUR_BYTE:begin
+                written_data = {cache_written_data[7:0],cache_written_data[15:8],cache_written_data[23:16],cache_written_data[31:24]};
+            end
+            default:
+            $display("[ERROR]:unexpected data type in data cache\n");
         endcase
     end
     
@@ -199,7 +220,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                             `D_CACHE_STORE:begin
                                 CNT               <= 1;
                                 mem_vis_signal    <= `MEM_WRITE;
-                                mem_writen_data   <= cache_writen_data;
+                                mem_written_data  <= written_data;
                                 written_data_type <= requested_data_type;
                             end
                             default:

@@ -28,7 +28,7 @@
 `define     ONE_BYTE            3'b000
 `define     TWO_BYTE            3'b001
 `define     FOUR_BYTE           3'b010
-`define     EIGHT_BYTE          3'b011
+`define     EIGHT_BYTE          3'b011 
 
 `define     ONE_BIT             3'b111
 
@@ -78,10 +78,10 @@
 // MEMORY CONTROLER
 // -------------------------------------------------------------------------
 // task type
-`define     MEM_NOP             2'b00
-`define     MEM_LOAD            2'b01
-`define     MEM_STORE           2'b10
-`define     MEM_REST            2'b11
+`define     MEM_CTR_NOP             2'b00
+`define     MEM_CTR_LOAD            2'b01
+`define     MEM_CTR_STORE           2'b10
+`define     MEM_CTR_REST            2'b11
 
 
 // working status
@@ -170,10 +170,11 @@
 // Data Size
 // ----------------------------------------------------------
 // 访存数据类型
-`define     NOT_ACCESS              2'b00
-`define     BYTE                    2'b01
-`define     HALF                    2'b10
-`define     WORD                    2'b11
+`define     BYTE                    2'b00
+`define     HALF                    2'b01
+`define     WORD                    2'b10
+`define     NOT_ACCESS              2'b11
+
 
 // vector访存形式
 `define     STRIDE                  2'b01
