@@ -80,6 +80,7 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                     if (inst_fetch_enabled) begin
                         valid[_current_index] <= `FALSE;
                         CNT                   <= 0;
+                        inst_fetch_status     <= `I_CACHE_RESTING;
                         mem_vis_signal        <= `MEM_NOP;
                         _flash                <= `FALSE;
                     end
@@ -146,6 +147,9 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                             _instruction <= inst[ind];
                         end
                     end
+                end
+                else begin
+                    inst_fetch_status <= `I_CACHE_RESTING;
                 end
             end
             default:

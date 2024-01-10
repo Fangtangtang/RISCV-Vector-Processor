@@ -214,37 +214,6 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                     default:
                     $display("[ERROR]:unexpected task_type when cnt == 3 in data cache\n");
                 endcase
-                        // case (mem_status)
-                        // `MEM_INST_WORKING:begin
-                        // CNT                <= 3;
-                        // mem_vis_signal     <= `MEM_NOP;
-                        // d_cache_vis_status <= `D_CACHE_STALL;
-                        // end
-                        // `MEM_DATA_WORKING:begin
-                        // CNT                <= 3;
-                        // mem_vis_signal     <= `MEM_NOP;
-                        // d_cache_vis_status <= `D_CACHE_STALL;
-                        // end
-                        // `MEM_RESTING:begin
-                        // d_cache_vis_status <= `D_CACHE_WORKING;
-                        // case (task_type)
-                        // `D_CACHE_LOAD:begin
-                        // CNT            <= 2;
-                        // mem_vis_signal <= `MEM_READ; // 读取单个数据
-                        // end
-                        // `D_CACHE_STORE:begin
-                        // CNT               <= 1;
-                        // mem_vis_signal    <= `MEM_WRITE;
-                        // mem_written_data  <= written_data;
-                        // written_data_type <= requested_data_type;
-                        // end
-                        // default:
-                        // $display("[ERROR]:unexpected task_type when cnt == 3 in data cache\n");
-                        // endcase
-                        // end
-                        // default:
-                        // $display("[ERROR]:unexpected mem_status when cnt == 3 in data cache\n");
-                        // endcase
             end
             // 工作中，处理mem数据，再次发起访存
             // load:一次要填充两个cache line，再从cache line中取数据

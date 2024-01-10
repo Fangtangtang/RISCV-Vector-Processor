@@ -232,29 +232,30 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
                         if (data_vis_signal == `MEM_CTR_NOP) begin
                             CNT            <= 0;
                             mem_vis_status <= `MEM_CTR_FINISHED;
-                            end else begin
-                                CNT            <= 2;
-                                mem_vis_status <= `MEM_CTR_WORKING;
-                                if (is_vector) begin
-                                    requested_length     <= length;
-                                    _vm                  <= vm;
-                                    _mask                <= mask;
-                                    _written_scalar_data <= written_scalar_data;
-                                    _written_vector_data <= written_vector_data;
-                                end
-                                else begin
-                                    requested_length <= 1;
-                                end
+                        end
+                        else begin
+                            CNT            <= 2;
+                            mem_vis_status <= `MEM_CTR_WORKING;
+                            if (is_vector) begin
+                                requested_length     <= length;
+                                _vm                  <= vm;
+                                _mask                <= mask;
+                                _written_scalar_data <= written_scalar_data;
+                                _written_vector_data <= written_vector_data;
+                            end
+                            else begin
+                                requested_length <= 1;
                             end
                         end
                     end
-                    else begin
-                        task_type      <= `MEM_CTR_REST;
-                        mem_vis_status <= `MEM_CTR_RESTING;
-                    end
                 end
-                default:
-                $display("[ERROR]:unexpected CNT in memory controler\n");
+                else begin
+                    task_type      <= `MEM_CTR_REST;
+                    mem_vis_status <= `MEM_CTR_RESTING;
+                end
+            end
+            default:
+            $display("[ERROR]:unexpected CNT in memory controler\n");
         endcase
     end
     

@@ -554,34 +554,41 @@ module CORE#(parameter ADDR_WIDTH = 17,
     
     // branch
     always @(*) begin
-        if (EXE_MEM_BRANCH_SIGNAL == `CONDITIONAL) begin
-            case (EXE_MEM_FUNC_CODE[2:0])
-                3'b000:begin
-                    if (EXE_MEM_ZERO_BITS == `ZERO) begin
-                        branch_flag = 1;
+        case (EXE_MEM_BRANCH_SIGNAL)
+            `CONDITIONAL:begin
+                case (EXE_MEM_FUNC_CODE[2:0])
+                    3'b000:begin
+                        if (EXE_MEM_ZERO_BITS == `ZERO) begin
+                            branch_flag = 1;
+                        end
+                        else begin
+                            branch_flag = 0;
+                        end
                     end
-                    else begin
-                        branch_flag = 0;
+                    3'b001:begin
+                        if (EXE_MEM_ZERO_BITS == `ZERO) begin
+                            branch_flag = 0;
+                        end
+                        else begin
+                            branch_flag = 1;
+                        end
                     end
-                end
-                3'b001:begin
-                    if (EXE_MEM_ZERO_BITS == `ZERO) begin
-                        branch_flag = 0;
-                    end
-                    else begin
-                        branch_flag = 1;
-                    end
-                end
-                default:
-                $display("[ERROR]:unexpected branch instruction\n");
-            endcase
-        end
-        else if (EXE_MEM_BRANCH_SIGNAL == `NOT_BRANCH) begin
-            branch_flag = 0;
-        end
-        else begin
-            branch_flag = 1;
-        end
+                    default:
+                    $display("[ERROR]:unexpected branch instruction\n");
+                endcase
+            end
+            `UNCONDITIONAL:begin
+                branch_flag = 1;
+            end
+            `UNCONDITIONAL_RESULT:begin
+                branch_flag = 1;
+            end
+            `NOT_BRANCH:begin
+                branch_flag = 0;
+            end
+            default:
+            $display("[ERROR]:unexpected EXE_MEM_BRANCH_SIGNAL in core\n");
+        endcase
     end
     
     always @(*) begin
