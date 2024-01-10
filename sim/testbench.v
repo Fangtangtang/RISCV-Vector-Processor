@@ -9,19 +9,23 @@
 
 `timescale 1ns/1ps
 
-module testbench;
-
-    reg clk; 
-    reg rst; 
+module testbench();
     
-    top#(.SIM(1)) top_(
-        .EXCLK(clk),
-        .btnC(rst),
-        .Tx(),
-        .Rx(),
-        .led()
+    reg clk;
+    reg rst;
+    
+    top#(
+    .SIM(1),
+    .LEN(32)
+    )
+    top_(
+    .EXCLK(clk),
+    .btnC(rst),
+    .Tx(),
+    .Rx(),
+    .led()
     );
-
+    
     initial begin
         clk               = 0;
         rst               = 1;

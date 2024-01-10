@@ -36,7 +36,8 @@ module CORE#(parameter ADDR_WIDTH = 17,
              input [LEN-1:0] instruction,
              input [LEN-1:0] mem_read_scalar_data,
              input [LEN*VECTOR_SIZE-1:0] mem_read_vector_data,
-             input [1:0] mem_vis_status,
+             input [1:0] i_cache_vis_status,
+             input [1:0] d_cache_vis_status,
              output [LEN-1:0] mem_write_scalar_data,
              output vm,
              output [LEN*VECTOR_SIZE-1:0] mask,
@@ -47,7 +48,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
              output inst_fetch_enabled,
              output mem_vis_enabled,
              output [1:0] memory_vis_signal,
-             output [2:0] data_type,                            
+             output [2:0] data_type,
              output is_vector);
     
     // REGISTER
@@ -417,7 +418,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
                     IF_ID_PC <= PC;
                 end
                 // IF没有结束，向下加stall
-                if (mem_vis_status == `IF_FINISHED) begin
+                if (i_cache_vis_status == `IF_FINISHED) begin
                     ID_STATE_CTR <= 1;
                 end
                 else begin
@@ -598,7 +599,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     always @(posedge clk) begin
         if ((!rst)&&rdy_in&&start_cpu) begin
             if (MEM_STATE_CTR) begin
-                if (mem_vis_status == `D_CACHE_RESTING) begin
+                if (i_cache_vis_status == `MEM_RESTING) begin
                     // update pc
                     if (branch_flag) begin
                         PC <= special_pc;
@@ -634,7 +635,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
                 end
             end
             
-            if (mem_vis_status == `L_S_FINISHED) begin
+            if (d_cache_vis_status == `MEM_FINISHED) begin
                 if (mem_working_on_vector) begin
                     // 向量
                     MEM_WB_MEM_VECTOR_DATA <= mem_read_vector_data;

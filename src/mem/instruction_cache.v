@@ -12,7 +12,7 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                           parameter LEN = 32,
                           parameter BYTE_SIZE = 8,
                           parameter I_CACHE_SIZE = 2,
-                          parameter INDEX_SIZE = 1)
+                          parameter I_CACHE_INDEX_SIZE = 1)
                          (input wire clk,
                           input [ADDR_WIDTH-1:0] inst_addr,     // instruction fetch
                           input inst_fetch_enabled,
@@ -38,7 +38,7 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
     
     reg _hit;
     reg _flash;
-    reg [INDEX_SIZE-1:0] _current_index = 0; // 当前地址对应的entry下标
+    reg [I_CACHE_INDEX_SIZE-1:0] _current_index = 0; // 当前地址对应的entry下标
     reg [ADDR_WIDTH-1:0] _requested_addr;
     reg [ADDR_WIDTH-1:0] _current_addr = 0;
     
