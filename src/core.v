@@ -47,7 +47,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
              output inst_fetch_enabled,
              output mem_vis_enabled,
              output [1:0] memory_vis_signal,
-             output [2:0] data_type,                             // todo 接口接线
+             output [2:0] data_type,                            
              output is_vector);
     
     // REGISTER

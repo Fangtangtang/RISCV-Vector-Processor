@@ -10,8 +10,8 @@
 // |   load未激活部分用默认数值0填充，write back带mask
 // 
 // - 未激活，快进；发向cache的地址hit（组合逻辑实现），快进
-// todo:mask
-// todo:等待finish？？？
+// 
+// todo:mask的load，被mask部分用0替换？
 // #############################################################################################################################
 `include"src/defines.v"
 
@@ -46,6 +46,9 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
     
     reg [1:0]                   CNT = 0;
     reg [1:0]                   task_type;
+    
+    reg _vm;
+    reg [LEN*VECTOR_SIZE-1:0] _mask;
     
     reg                         visit_vector;
     reg [2:0]                   requested_data_type;
@@ -98,16 +101,28 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
                     mem_vis_status <= `MEM_WORKING;
                     case (task_type)
                         `MEM_CTR_LOAD:begin
-                            cache_vis_signal <= `D_CACHE_LOAD;
-                            current_length   <= current_length+1;
+                            if (!visit_vector||(_mask[current_length]||_vm))begin
+                                cache_vis_signal <= `D_CACHE_LOAD;
+                            end
+                            else begin
+                                cache_vis_signal <= `D_CACHE_NOP;
+                            end
+                            current_length <= current_length+1;
                         end
                         `MEM_CTR_STORE:begin
                             cache_vis_signal <= `D_CACHE_STORE;
                             if (visit_vector) begin
+                                if (_mask[current_length]||_vm)begin
+                                    cache_vis_signal <= `D_CACHE_STORE;
+                                end
+                                else begin
+                                    cache_vis_signal <= `D_CACHE_NOP;
+                                end
                                 cache_written_data <= written_data; // 第一个待写数据
                                 current_length     <= current_length+1;
                             end
                             else begin
+                                cache_vis_signal   <= `D_CACHE_STORE;
                                 cache_written_data <= _written_scalar_data;
                             end
                         end
@@ -125,66 +140,77 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
             1:begin
                 case (task_type)
                     `MEM_CTR_LOAD:begin
-                        if (visit_vector) begin
-                            case(requested_data_type)
-                                `ONE_BYTE:begin
-                                    load_vector_data_slices[current_length-1] <= mem_data[7:0];
+                        if (d_cache_status == `L_S_FINISHED) begin
+                            if (visit_vector) begin
+                                case(requested_data_type)
+                                    `ONE_BYTE:begin
+                                        load_vector_data_slices[current_length-1] <= mem_data[7:0];
+                                    end
+                                    `TWO_BYTE:begin
+                                        load_vector_data_slices[(current_length-1)<<1]   <= mem_data[7:0];
+                                        load_vector_data_slices[(current_length-1)<<1+1] <= mem_data[15:8];
+                                    end
+                                    `FOUR_BYTE:begin
+                                        load_vector_data_slices[(current_length-1)<<2]   <= mem_data[7:0];
+                                        load_vector_data_slices[(current_length-1)<<2+1] <= mem_data[15:8];
+                                        load_vector_data_slices[(current_length-1)<<2+2] <= mem_data[23:16];
+                                        load_vector_data_slices[(current_length-1)<<2+3] <= mem_data[31:24];
+                                    end
+                                    default:
+                                    $display("[ERROR]:unexpected requested_data_type in mem ctr\n");
+                                endcase
+                                if (current_length+1 == requested_length)begin
+                                    CNT              <= 0;
+                                    mem_vis_status   <= `MEM_FINISHED;
+                                    cache_vis_signal <= `D_CACHE_NOP;
                                 end
-                                `TWO_BYTE:begin
-                                    load_vector_data_slices[(current_length-1)<<1]   <= mem_data[7:0];
-                                    load_vector_data_slices[(current_length-1)<<1+1] <= mem_data[15:8];
-                                end
-                                `FOUR_BYTE:begin
-                                    load_vector_data_slices[(current_length-1)<<2]   <= mem_data[7:0];
-                                    load_vector_data_slices[(current_length-1)<<2+1] <= mem_data[15:8];
-                                    load_vector_data_slices[(current_length-1)<<2+2] <= mem_data[23:16];
-                                    load_vector_data_slices[(current_length-1)<<2+3] <= mem_data[31:24];
-                                end
-                                default:
-                                $display("[ERROR]:unexpected requested_data_type in mem ctr\n");
-                            endcase
-                            // 未结束
-                            if (current_length+1 < requested_length)begin
-                                current_length   <= current_length+1;
-                                CNT              <= 1;
-                                mem_vis_status   <= `MEM_WORKING;
-                                cache_vis_signal <= `D_CACHE_LOAD;
                             end
-                            // 结束
                             else begin
+                                scalar_data      <= mem_data;
                                 CNT              <= 0;
                                 mem_vis_status   <= `MEM_FINISHED;
                                 cache_vis_signal <= `D_CACHE_NOP;
                             end
                         end
-                        else begin
-                            scalar_data      <= mem_data;
-                            CNT              <= 0;
-                            mem_vis_status   <= `MEM_FINISHED;
-                            cache_vis_signal <= `D_CACHE_NOP;
+                        if (d_cache_status == `D_CACHE_RESTING)begin
+                            if (visit_vector) begin
+                                // 未结束
+                                if (current_length+1 < requested_length)begin
+                                    current_length <= current_length+1;
+                                    CNT            <= 1;
+                                    mem_vis_status <= `MEM_WORKING;
+                                    if (_mask[current_length]||_vm)begin
+                                        cache_vis_signal <= `D_CACHE_LOAD;
+                                    end
+                                    else begin
+                                        cache_vis_signal <= `D_CACHE_NOP;
+                                    end
+                                end
+                            end
                         end
                     end
                     `MEM_CTR_STORE:begin
-                        if (visit_vector) begin
-                            // 未结束
-                            if (current_length+1 < requested_length)begin
+                        if (d_cache_status == `L_S_FINISHED)begin
+                            if (!visit_vector||(current_length+1 == requested_length)) begin
+                                CNT              <= 0;
+                                mem_vis_status   <= `MEM_FINISHED;
+                                cache_vis_signal <= `D_CACHE_NOP;
+                            end
+                        end
+                        if (d_cache_status == `D_CACHE_RESTING)begin
+                            if (visit_vector&&(current_length+1 < requested_length)) begin
+                                // 未结束
                                 cache_written_data <= written_data;
                                 current_length     <= current_length+1;
                                 CNT                <= 1;
                                 mem_vis_status     <= `MEM_WORKING;
-                                cache_vis_signal   <= `D_CACHE_STORE;
+                                if (_mask[current_length]||_vm)begin
+                                    cache_vis_signal <= `D_CACHE_STORE;
+                                end
+                                else begin
+                                    cache_vis_signal <= `D_CACHE_NOP;
+                                end
                             end
-                            // 结束
-                            else begin
-                                CNT              <= 0;
-                                mem_vis_status   <= `MEM_FINISHED;
-                                cache_vis_signal <= `D_CACHE_NOP;
-                            end
-                        end
-                        else begin
-                            CNT              <= 0;
-                            mem_vis_status   <= `MEM_FINISHED;
-                            cache_vis_signal <= `D_CACHE_NOP;
                         end
                     end
                     default:
@@ -193,6 +219,7 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
             end
             // 工作完成或任务发布
             0:begin
+                current_length   <= 0;
                 cache_vis_signal <= `D_CACHE_NOP;
                 // 空闲
                 if (task_type == `MEM_CTR_REST) begin
@@ -209,6 +236,8 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
                                 mem_vis_status <= `MEM_WORKING;
                                 if (is_vector) begin
                                     requested_length     <= length;
+                                    _vm                  <= vm;
+                                    _mask                <= mask;
                                     _written_scalar_data <= written_scalar_data;
                                     _written_vector_data <= written_vector_data;
                                 end
