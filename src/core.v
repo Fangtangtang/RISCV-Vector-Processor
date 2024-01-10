@@ -38,6 +38,8 @@ module CORE#(parameter ADDR_WIDTH = 17,
              input [LEN*VECTOR_SIZE-1:0] mem_read_vector_data,
              input [1:0] mem_vis_status,
              output [LEN-1:0] mem_write_scalar_data,
+             output vm,
+             output [LEN*VECTOR_SIZE-1:0] mask,
              output [LEN*VECTOR_SIZE-1:0] mem_write_vector_data,
              output [ENTRY_INDEX_SIZE:0] vector_length,
              output [ADDR_WIDTH-1:0] mem_inst_addr,
@@ -45,7 +47,8 @@ module CORE#(parameter ADDR_WIDTH = 17,
              output inst_fetch_enabled,
              output mem_vis_enabled,
              output [1:0] memory_vis_signal,
-             output [2:0] data_type);
+             output [2:0] data_type,                             // todo 接口接线
+             output is_vector);
     
     // REGISTER
     // ---------------------------------------------------------------------------------------------
@@ -152,14 +155,28 @@ module CORE#(parameter ADDR_WIDTH = 17,
     
     // MEM VISIT
     // ---------------------------------------------------------------------------------------------
+    reg [2:0] scalar_data_type;
+    always @(*) begin
+        case (EXE_MEM_MEM_VIS_DATA_SIZE)
+            `BYTE: scalar_data_type = `ONE_BYTE;
+            `HALF: scalar_data_type = `TWO_BYTE;
+            `WORD: scalar_data_type = `FOUR_BYTE;
+        endcase
+    end
+    
     assign mem_inst_addr         = PC[ADDR_WIDTH-1:0];
     assign inst_fetch_enabled    = IF_STATE_CTR;
     assign mem_write_scalar_data = EXE_MEM_RS2;
     
     assign mem_data_addr         = EXE_MEM_SCALAR_RESULT[ADDR_WIDTH-1:0];
     assign mem_vis_enabled       = MEM_STATE_CTR;
+    assign memory_vis_signal     = MEM_STATE_CTR ? EXE_MEM_MEM_VIS_SIGNAL:`MEM_CTR_NOP;
+    assign vm                    = EXE_MEM_VM;
+    assign mask                  = EXE_MEM_MASK;
     assign mem_write_vector_data = EXE_MEM_VS3;
-    assign vector_length         = 1; // todo
+    assign vector_length         = EXE_MEM_VL;
+    assign is_vector             = EXE_MEM_IS_VEC_INST;
+    assign data_type             = EXE_MEM_IS_VEC_INST? EXE_MEM_VSEW : scalar_data_type;
     
     
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

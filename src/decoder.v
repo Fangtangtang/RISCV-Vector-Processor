@@ -108,7 +108,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                     `VL:begin
                         exe_signal       = `MEM_ADDR;
                         vec_operand_type = `NOT_VEC_ARITH;
-                        mem_vis_signal   = `MEM_READ_BURST;
+                        mem_vis_signal   = `MEM_CTR_LOAD;
                         case (func3)
                             3'b000:begin
                                 data_size = `BYTE;
@@ -142,7 +142,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                     `VS:begin
                         exe_signal       = `MEM_ADDR;
                         vec_operand_type = `NOT_VEC_ARITH;
-                        mem_vis_signal   = `MEM_WRITE;
+                        mem_vis_signal   = `MEM_CTR_STORE;
                         case (func3)
                             3'b000:begin
                                 data_size = `BYTE;
@@ -174,7 +174,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                     end
                     // arithmetic\configuration
                     `VARITH:begin
-                        mem_vis_signal  = `MEM_NOP;
+                        mem_vis_signal  = `MEM_CTR_NOP;
                         data_size       = `NOT_ACCESS;
                         vector_l_s_type = `NOT_ACCESS;
                         branch_signal   = `NOT_BRANCH;
@@ -220,14 +220,14 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                 case (opcode)
                     7'b0110011: begin
                         exe_signal     = `BINARY;
-                        mem_vis_signal = `MEM_NOP;
+                        mem_vis_signal = `MEM_CTR_NOP;
                         data_size      = `NOT_ACCESS;
                         branch_signal  = `NOT_BRANCH;
                         wb_signal      = `ARITH;
                     end
                     7'b0010011: begin
                         exe_signal     = `IMM_BINARY;
-                        mem_vis_signal = `MEM_NOP;
+                        mem_vis_signal = `MEM_CTR_NOP;
                         data_size      = `NOT_ACCESS;
                         branch_signal  = `NOT_BRANCH;
                         wb_signal      = `ARITH;
@@ -243,7 +243,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                 case (opcode)
                     7'b0010011: begin
                         exe_signal     = `IMM_BINARY;
-                        mem_vis_signal = `MEM_NOP;
+                        mem_vis_signal = `MEM_CTR_NOP;
                         data_size      = `NOT_ACCESS;
                         branch_signal  = `NOT_BRANCH;
                         wb_signal      = `ARITH;
@@ -251,7 +251,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                     // load
                     7'b0000011:begin
                         exe_signal     = `MEM_ADDR;
-                        mem_vis_signal = `MEM_READ;
+                        mem_vis_signal = `MEM_CTR_LOAD;
                         branch_signal  = `NOT_BRANCH;
                         wb_signal      = `MEM_TO_REG;
                         case (func_code[2:0])
@@ -265,7 +265,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                     // jalr
                     7'b1100111:begin
                         exe_signal     = `MEM_ADDR;
-                        mem_vis_signal = `MEM_NOP;
+                        mem_vis_signal = `MEM_CTR_NOP;
                         data_size      = `NOT_ACCESS;
                         branch_signal  = `UNCONDITIONAL_RESULT;
                         wb_signal      = `INCREASED_PC;
@@ -279,7 +279,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                 vec_operand_type = `NOT_VEC_ARITH;
                 vector_l_s_type  = `NOT_ACCESS;
                 exe_signal       = `MEM_ADDR;
-                mem_vis_signal   = `MEM_WRITE;
+                mem_vis_signal   = `MEM_CTR_STORE;
                 branch_signal    = `NOT_BRANCH;
                 wb_signal        = `WB_NOP;
                 case (func_code[2:0])
@@ -295,7 +295,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                 vec_operand_type = `NOT_VEC_ARITH;
                 vector_l_s_type  = `NOT_ACCESS;
                 exe_signal       = `BRANCH_COND;
-                mem_vis_signal   = `MEM_NOP;
+                mem_vis_signal   = `MEM_CTR_NOP;
                 data_size        = `NOT_ACCESS;
                 branch_signal    = `CONDITIONAL;
                 wb_signal        = `WB_NOP;
@@ -307,14 +307,14 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                 case (opcode)
                     7'b0110111:begin
                         exe_signal     = `IMM;
-                        mem_vis_signal = `MEM_NOP;
+                        mem_vis_signal = `MEM_CTR_NOP;
                         data_size      = `NOT_ACCESS;
                         branch_signal  = `NOT_BRANCH;
                         wb_signal      = `ARITH;
                     end
                     7'b0010111:begin
                         exe_signal     = `PC_BASED;
-                        mem_vis_signal = `MEM_NOP;
+                        mem_vis_signal = `MEM_CTR_NOP;
                         data_size      = `NOT_ACCESS;
                         branch_signal  = `NOT_BRANCH;
                         wb_signal      = `ARITH;
@@ -328,7 +328,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                 vec_operand_type = `NOT_VEC_ARITH;
                 vector_l_s_type  = `NOT_ACCESS;
                 exe_signal       = `PC_BASED;
-                mem_vis_signal   = `MEM_NOP;
+                mem_vis_signal   = `MEM_CTR_NOP;
                 data_size        = `NOT_ACCESS;
                 branch_signal    = `UNCONDITIONAL;
                 wb_signal        = `INCREASED_PC;

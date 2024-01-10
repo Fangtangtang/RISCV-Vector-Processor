@@ -10,6 +10,8 @@
 // |   load未激活部分用默认数值0填充，write back带mask
 // 
 // - 未激活，快进；发向cache的地址hit（组合逻辑实现），快进
+// todo:mask
+// todo:等待finish？？？
 // #############################################################################################################################
 `include"src/defines.v"
 
@@ -25,9 +27,9 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
                          input mem_access_enabled,
                          input is_vector,                                 // 是否为向量访存
                          input [1:0] data_vis_signal,
-                         input[1:0] scalar_data_type,
-                         input[2:0] vector_data_type,
+                         input[2:0] mem_data_type,
                          input [ENTRY_INDEX_SIZE:0] length,
+                         input vm,
                          input [LEN*VECTOR_SIZE-1:0] mask,                // 向量访存掩码
                          output reg [LEN-1:0] scalar_data,
                          output [LEN*VECTOR_SIZE-1:0] vector_data,
@@ -39,7 +41,7 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
                          output reg [LEN-1:0] cache_written_data,         // 写入memory的数据
                          output [ENTRY_INDEX_SIZE:0] write_length,        // 1:单个数
                          output [ADDR_WIDTH-1:0] mem_vis_addr,            // 访存地址
-                         output [2:0] data_type,                          // 数据类型（包括标量向量）
+                         output [2:0] d_cache_data_type,                  // 数据类型（包括标量向量）
                          output reg [1:0] cache_vis_signal);
     
     reg [1:0]                   CNT = 0;
@@ -85,7 +87,7 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
         assign load_vector_data[(i+1)*8 - 1 : i*8] = load_vector_data_slices[i];
     end
     
-    assign data_type = requested_data_type;
+    assign d_cache_data_type = requested_data_type;
     
     always @(posedge clk) begin
         case (CNT)
@@ -143,10 +145,10 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
                             endcase
                             // 未结束
                             if (current_length+1 < requested_length)begin
-                                current_length     <= current_length+1;
-                                CNT                <= 1;
-                                mem_vis_status     <= `MEM_WORKING;
-                                cache_vis_signal   <= `D_CACHE_LOAD;
+                                current_length   <= current_length+1;
+                                CNT              <= 1;
+                                mem_vis_status   <= `MEM_WORKING;
+                                cache_vis_signal <= `D_CACHE_LOAD;
                             end
                             // 结束
                             else begin
@@ -197,7 +199,7 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
                     if (mem_access_enabled) begin
                         visit_vector        <= is_vector;
                         task_type           <= data_vis_signal;
-                        requested_data_type <= data_type;
+                        requested_data_type <= mem_data_type;
                         current_addr        <= data_addr;
                         if (data_vis_signal == `MEM_CTR_NOP) begin
                             CNT            <= 0;

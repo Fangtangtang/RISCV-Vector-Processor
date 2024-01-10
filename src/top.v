@@ -12,6 +12,7 @@
 // |
 // #############################################################################################################################
 `include"src/core.v"
+`include"src/mem_ctr.v"
 `include"src/mem/data_cache.v"
 `include"src/mem/instruction_cache.v"
 `include"src/mem/main_memory.v"
@@ -49,19 +50,17 @@ module top#(parameter SIM = 0,
     
     wire core_rdy = 1;
     
-    // todo: add module
     localparam ADDR_WIDTH       = 17;
     localparam BYTE_SIZE        = 32;
     localparam VECTOR_SIZE      = 8;
     localparam ENTRY_INDEX_SIZE = 3;
     localparam LONGEST_LEN      = 64;
     
-    localparam I_CACHE_SIZE         = 2;
-    localparam I_CACHE_INDEX_SIZE   = 1;
-    localparam S_CACHE_SIZE       	 = 4;
-    localparam S_CACHE_INDEX_SIZE 	 = 2;
-    localparam V_CACHE_SIZE       	 = 1;
-    localparam V_CACHE_INDEX_SIZE 	 = 1;
+    localparam I_CACHE_SIZE       = 2;
+    localparam I_CACHE_INDEX_SIZE = 1;
+    localparam CACHE_SIZE       	 = 16;
+    localparam CACHE_INDEX_SIZE 	 = 4;
+    
     
     // CORE
     // ---------------------------------------------------------------------------------------------
@@ -75,7 +74,8 @@ module top#(parameter SIM = 0,
     wire                       	mem_vis_enabled;
     wire [1:0]                 	memory_vis_signal;
     wire [2:0]                 	data_type;           // todo
-    
+    wire                        is_vector;
+
     CORE #(
     .ADDR_WIDTH       	(ADDR_WIDTH),
     .LEN              	(LEN),
@@ -100,7 +100,8 @@ module top#(parameter SIM = 0,
     .inst_fetch_enabled    	(inst_fetch_enabled),
     .mem_vis_enabled       	(mem_vis_enabled),
     .memory_vis_signal     	(memory_vis_signal),
-    .data_type             	(data_type)
+    .data_type             	(data_type),
+    .is_vector              (is_vector)
     );
     
     
@@ -132,48 +133,12 @@ module top#(parameter SIM = 0,
     .mem_vis_signal     	(i_cache_mem_vis_signal)
     );
     
+    // MEMORY CONTROLER
+    // ---------------------------------------------------------------------------------------------
+    
     // DATA CACHE
     // ---------------------------------------------------------------------------------------------
     
-    // outports wire
-    wire [LEN-1:0]             	scalar_data;
-    wire [LEN*VECTOR_SIZE-1:0] 	vector_data;
-    wire [1:0]                 	mem_vis_status;
-    wire [LEN-1:0]             	mem_writen_data;
-    wire [ENTRY_INDEX_SIZE:0]  	write_length;
-    wire [ADDR_WIDTH-1:0]      	d_cache_mem_vis_addr;
-    wire [1:0]                 	d_cache_mem_vis_signal;
-    
-    DATA_CACHE #(
-    .ADDR_WIDTH         	(ADDR_WIDTH),
-    .LEN                	(LEN),
-    .BYTE_SIZE          	(BYTE_SIZE),
-    .VECTOR_SIZE        	(VECTOR_SIZE),
-    .ENTRY_INDEX_SIZE   	(ENTRY_INDEX_SIZE),
-    .S_CACHE_SIZE       	(S_CACHE_SIZE),
-    .S_CACHE_INDEX_SIZE 	(S_CACHE_INDEX_SIZE),
-    .V_CACHE_SIZE       	(V_CACHE_SIZE),
-    .V_CACHE_INDEX_SIZE 	(V_CACHE_INDEX_SIZE)
-    )
-    data_cache(
-    .clk                	(clk),
-    .data_addr          	(mem_data_addr),
-    .mem_access_enabled 	(mem_vis_enabled),
-    .is_vector          	(is_vector),// todo
-    .d_cache_vis_signal 	(memory_vis_signal),
-    .length             	(vector_length),
-    .scalar_data        	(scalar_data),
-    .vector_data        	(vector_data),
-    .writen_scalar_data 	(mem_write_scalar_data),
-    .writen_vector_data 	(mem_write_vector_data),
-    .mem_vis_status     	(mem_vis_status),
-    .mem_data           	(mem_data),
-    .mem_status         	(mem_status),
-    .mem_writen_data    	(mem_writen_data),
-    .write_length       	(write_length),
-    .mem_vis_addr       	(d_cache_mem_vis_addr),
-    .mem_vis_signal     	(d_cache_mem_vis_signal)
-    );
     
     // MAIN MEMORY
     // ---------------------------------------------------------------------------------------------
