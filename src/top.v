@@ -55,14 +55,14 @@ module top#(parameter SIM = 0,
     localparam VECTOR_SIZE      = 8;
     localparam ENTRY_INDEX_SIZE = 3;
     localparam LONGEST_LEN      = 64;
-
+    
     localparam I_CACHE_SIZE         = 2;
     localparam I_CACHE_INDEX_SIZE   = 1;
     localparam S_CACHE_SIZE       	 = 4;
     localparam S_CACHE_INDEX_SIZE 	 = 2;
     localparam V_CACHE_SIZE       	 = 1;
     localparam V_CACHE_INDEX_SIZE 	 = 1;
-
+    
     // CORE
     // ---------------------------------------------------------------------------------------------
     // outports wire
@@ -110,8 +110,8 @@ module top#(parameter SIM = 0,
     // outports wire
     wire [LEN-1:0]        	instruction;
     wire [1:0]            	inst_fetch_status;
-    wire [ADDR_WIDTH-1:0] 	mem_vis_addr;
-    wire [1:0]            	mem_vis_signal;
+    wire [ADDR_WIDTH-1:0] 	i_cache_mem_vis_addr;
+    wire [1:0]            	i_cache_mem_vis_signal;
     
     INSTRUCTION_CACHE#(
     .ADDR_WIDTH   	(ADDR_WIDTH),
@@ -128,8 +128,8 @@ module top#(parameter SIM = 0,
     .inst_fetch_status  	(inst_fetch_status),
     .mem_data           	(mem_data),
     .mem_status         	(mem_status),
-    .mem_vis_addr       	(mem_vis_addr),
-    .mem_vis_signal     	(mem_vis_signal)
+    .mem_vis_addr       	(i_cache_mem_vis_addr),
+    .mem_vis_signal     	(i_cache_mem_vis_signal)
     );
     
     // DATA CACHE
@@ -141,8 +141,8 @@ module top#(parameter SIM = 0,
     wire [1:0]                 	mem_vis_status;
     wire [LEN-1:0]             	mem_writen_data;
     wire [ENTRY_INDEX_SIZE:0]  	write_length;
-    wire [ADDR_WIDTH-1:0]      	mem_vis_addr;
-    wire [1:0]                 	mem_vis_signal;
+    wire [ADDR_WIDTH-1:0]      	d_cache_mem_vis_addr;
+    wire [1:0]                 	d_cache_mem_vis_signal;
     
     DATA_CACHE #(
     .ADDR_WIDTH         	(ADDR_WIDTH),
@@ -159,7 +159,7 @@ module top#(parameter SIM = 0,
     .clk                	(clk),
     .data_addr          	(mem_data_addr),
     .mem_access_enabled 	(mem_vis_enabled),
-    .is_vector          	(is_vector),
+    .is_vector          	(is_vector),// todo
     .d_cache_vis_signal 	(memory_vis_signal),
     .length             	(vector_length),
     .scalar_data        	(scalar_data),
@@ -171,8 +171,8 @@ module top#(parameter SIM = 0,
     .mem_status         	(mem_status),
     .mem_writen_data    	(mem_writen_data),
     .write_length       	(write_length),
-    .mem_vis_addr       	(mem_vis_addr),
-    .mem_vis_signal     	(mem_vis_signal)
+    .mem_vis_addr       	(d_cache_mem_vis_addr),
+    .mem_vis_signal     	(d_cache_mem_vis_signal)
     );
     
     // MAIN MEMORY
@@ -193,8 +193,8 @@ module top#(parameter SIM = 0,
     .d_cache_mem_vis_signal 	(d_cache_mem_vis_signal),
     .i_cache_mem_vis_addr   	(i_cache_mem_vis_addr),
     .d_cache_mem_vis_addr   	(d_cache_mem_vis_addr),
-    .length                 	(length),
-    .writen_data            	(writen_data),
+    .length                 	(write_length),
+    .writen_data            	(mem_writen_data),
     .mem_data               	(mem_data),
     .mem_status             	(mem_status)
     );

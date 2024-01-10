@@ -109,7 +109,8 @@ module CORE#(parameter ADDR_WIDTH = 17,
     reg [VECTOR_SIZE*LEN - 1:0] EXE_MEM_VECTOR_RESULT;       // vector计算结果
     reg [VECTOR_SIZE*LEN - 1:0] EXE_MEM_MASK;
     reg [1:0]                   EXE_MEM_ZERO_BITS;           // condition
-    reg [LEN-1:0]               EXE_MEM_RS2;                 // 可能用于写的数据
+    reg [LEN-1:0]               EXE_MEM_RS2;                 // 可能用于写的标量数据
+    reg [VECTOR_SIZE*LEN - 1:0] EXE_MEM_VS3;                 // 可能用于写的向量数据
     
     reg                         EXE_MEM_VM;
     reg [31:0]                  EXE_MEM_VL;
@@ -148,6 +149,17 @@ module CORE#(parameter ADDR_WIDTH = 17,
     reg                         MEM_WB_IS_VEC_INST;
     reg                         MEM_WB_OP_ON_MASK;            // 是对mask的操作
     reg [1:0]                   MEM_WB_WB_SIGNAL;
+    
+    // MEM VISIT
+    // ---------------------------------------------------------------------------------------------
+    assign mem_inst_addr         = PC[ADDR_WIDTH-1:0];
+    assign inst_fetch_enabled    = IF_STATE_CTR;
+    assign mem_write_scalar_data = EXE_MEM_RS2;
+    
+    assign mem_data_addr         = EXE_MEM_SCALAR_RESULT[ADDR_WIDTH-1:0];
+    assign mem_vis_enabled       = MEM_STATE_CTR;
+    assign mem_write_vector_data = EXE_MEM_VS3;
+    assign vector_length         = 1; // todo
     
     
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -457,6 +469,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
                 EXE_MEM_SCALAR_RESULT <= scalar_alu_result;
                 EXE_MEM_ZERO_BITS     <= scalar_alu_sign_bits;
                 EXE_MEM_RS2           <= ID_EXE_RS2;
+                EXE_MEM_VS3           <= ID_EXE_VS3;
                 
                 EXE_MEM_IMM       <= ID_EXE_IMM;
                 EXE_MEM_RD_INDEX  <= ID_EXE_RD_INDEX;

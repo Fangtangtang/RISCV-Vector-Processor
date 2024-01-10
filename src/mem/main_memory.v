@@ -15,7 +15,7 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
                     input [1:0] d_cache_mem_vis_signal,          // data cache
                     input [ADDR_WIDTH-1:0] i_cache_mem_vis_addr,
                     input [ADDR_WIDTH-1:0] d_cache_mem_vis_addr,
-                    input [ENTRY_INDEX_SIZE-1:0] length,
+                    input [ENTRY_INDEX_SIZE:0] length,
                     input [LEN-1:0] writen_data,
                     output [LEN-1:0] mem_data,
                     output reg [1:0] mem_status);
@@ -34,7 +34,7 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
     assign mem_tast_type = !(d_cache_mem_vis_signal == `MEM_NOP)?d_cache_mem_vis_signal:i_cache_mem_vis_signal;
     
     // count for write and burst read
-    reg [ENTRY_INDEX_SIZE-1:0] write_length;
+    reg [ENTRY_INDEX_SIZE:0] write_length;
     reg [ENTRY_INDEX_SIZE-1:0] CNT = 0;
     
     reg [LEN-1:0] read_data;
@@ -86,7 +86,7 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
             end
             default:
             $display("[ERROR]:unexpected mem_tast_type in main memory\n");
-        endcase   
+        endcase
     end
     
 endmodule
