@@ -228,7 +228,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     .reg2_index              	(decoder_reg2_index),
     .reg3_index              	(decoder_reg3_index),
     .vm                      	(decoder_vm),
-    .zimm                    	(decoder_zimm),
+    .zimm                    	(decoder_zimm), // todo:zimm in vector instruction
     .output_func_code        	(decoder_output_func_code),
     .output_func6            	(decoder_output_func6),
     .output_immediate        	(decoder_output_immediate),
@@ -426,7 +426,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
                 end
             end
             else begin
-                PC = 0;
+                PC <= 0;
             end
         end
     end
@@ -452,7 +452,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
                 ID_EXE_VL    <= VL;
                 ID_EXE_VTYPE <= VTYPE;
                 
-                ID_EXE_IMM              <= decoder_zimm;
+                ID_EXE_IMM              <= decoder_output_immediate;
                 ID_EXE_RD_INDEX         <= decoder_reg3_index;
                 ID_EXE_FUNC_CODE        <= decoder_output_func_code;
                 ID_EXE_VEC_OPERAND_TYPE <= decoder_output_vec_operand_type;
@@ -496,6 +496,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
                 EXE_MEM_IS_VEC_INST       <= ID_EXE_IS_VEC_INST;
                 EXE_MEM_MEM_VIS_SIGNAL    <= ID_EXE_MEM_VIS_SIGNAL;
                 EXE_MEM_MEM_VIS_DATA_SIZE <= ID_EXE_MEM_VIS_DATA_SIZE;
+                EXE_MEM_BRANCH_SIGNAL     <= ID_EXE_BRANCH_SIGNAL;
                 EXE_MEM_WB_SIGNAL         <= ID_EXE_WB_SIGNAL;
                 
                 MEM_STATE_CTR <= 1;
@@ -599,7 +600,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     always @(posedge clk) begin
         if ((!rst)&&rdy_in&&start_cpu) begin
             if (MEM_STATE_CTR) begin
-                if (i_cache_vis_status == `MEM_RESTING) begin
+                if (d_cache_vis_status == `MEM_CTR_RESTING) begin
                     // update pc
                     if (branch_flag) begin
                         PC <= special_pc;
@@ -635,7 +636,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
                 end
             end
             
-            if (d_cache_vis_status == `MEM_FINISHED) begin
+            if (d_cache_vis_status == `MEM_CTR_FINISHED) begin
                 if (mem_working_on_vector) begin
                     // 向量
                     MEM_WB_MEM_VECTOR_DATA <= mem_read_vector_data;

@@ -89,7 +89,7 @@ module top#(parameter SIM = 0,
     core(
     .clk                   	(clk),
     .rst                   	(rst),
-    .rdy_in                	(rdy_in),
+    .rdy_in                	(core_rdy),
     .instruction           	(instruction),
     .mem_read_scalar_data  	(scalar_data),
     .mem_read_vector_data  	(vector_data),

@@ -45,9 +45,9 @@
 
 // working status
 `define     MEM_RESTING         2'b00
-`define     MEM_INST_WORKING    2'b01
-`define     MEM_DATA_WORKING    2'b10
-`define     MEM_FINISHED        2'b11
+`define     MEM_INST_FINISHED   2'b01
+`define     MEM_DATA_FINISHED   2'b10
+// `define     MEM_FINISHED        2'b11
 
 
 // INSTRUCTION CACHE
@@ -85,10 +85,10 @@
 
 
 // working status
-`define     MEM_STALL           2'b00
-`define     MEM_WORKING         2'b01
-`define     MEM_FINISHED        2'b10
-`define     MEM_RESTING         2'b11
+`define     MEM_CTR_STALL           2'b00
+`define     MEM_CTR_WORKING         2'b01
+`define     MEM_CTR_FINISHED        2'b10
+`define     MEM_CTR_RESTING         2'b11
 
 // Reg File
 // -------------------------------------------------------------------------

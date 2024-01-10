@@ -199,68 +199,95 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
         case(CNT)
             // 等待开始工作
             3:begin
-                case (mem_status)
-                    `MEM_INST_WORKING:begin
-                        CNT                <= 3;
-                        mem_vis_signal     <= `MEM_NOP;
-                        d_cache_vis_status <= `D_CACHE_STALL;
+                d_cache_vis_status <= `D_CACHE_WORKING;
+                case (task_type)
+                    `D_CACHE_LOAD:begin
+                        CNT            <= 2;
+                        mem_vis_signal <= `MEM_READ; // 读取单个数据
                     end
-                    `MEM_DATA_WORKING:begin
-                        CNT                <= 3;
-                        mem_vis_signal     <= `MEM_NOP;
-                        d_cache_vis_status <= `D_CACHE_STALL;
-                    end
-                    `MEM_RESTING:begin
-                        d_cache_vis_status <= `D_CACHE_WORKING;
-                        case (task_type)
-                            `D_CACHE_LOAD:begin
-                                CNT            <= 2;
-                                mem_vis_signal <= `MEM_READ; // 读取单个数据
-                            end
-                            `D_CACHE_STORE:begin
-                                CNT               <= 1;
-                                mem_vis_signal    <= `MEM_WRITE;
-                                mem_written_data  <= written_data;
-                                written_data_type <= requested_data_type;
-                            end
-                            default:
-                            $display("[ERROR]:unexpected task_type when cnt == 3 in data cache\n");
-                        endcase
+                    `D_CACHE_STORE:begin
+                        CNT               <= 1;
+                        mem_vis_signal    <= `MEM_WRITE;
+                        mem_written_data  <= written_data;
+                        written_data_type <= requested_data_type;
                     end
                     default:
-                    $display("[ERROR]:unexpected mem_status when cnt == 3 in data cache\n");
+                    $display("[ERROR]:unexpected task_type when cnt == 3 in data cache\n");
                 endcase
+                        // case (mem_status)
+                        // `MEM_INST_WORKING:begin
+                        // CNT                <= 3;
+                        // mem_vis_signal     <= `MEM_NOP;
+                        // d_cache_vis_status <= `D_CACHE_STALL;
+                        // end
+                        // `MEM_DATA_WORKING:begin
+                        // CNT                <= 3;
+                        // mem_vis_signal     <= `MEM_NOP;
+                        // d_cache_vis_status <= `D_CACHE_STALL;
+                        // end
+                        // `MEM_RESTING:begin
+                        // d_cache_vis_status <= `D_CACHE_WORKING;
+                        // case (task_type)
+                        // `D_CACHE_LOAD:begin
+                        // CNT            <= 2;
+                        // mem_vis_signal <= `MEM_READ; // 读取单个数据
+                        // end
+                        // `D_CACHE_STORE:begin
+                        // CNT               <= 1;
+                        // mem_vis_signal    <= `MEM_WRITE;
+                        // mem_written_data  <= written_data;
+                        // written_data_type <= requested_data_type;
+                        // end
+                        // default:
+                        // $display("[ERROR]:unexpected task_type when cnt == 3 in data cache\n");
+                        // endcase
+                        // end
+                        // default:
+                        // $display("[ERROR]:unexpected mem_status when cnt == 3 in data cache\n");
+                        // endcase
             end
             // 工作中，处理mem数据，再次发起访存
             // load:一次要填充两个cache line，再从cache line中取数据
             2:begin
-                CNT                              <= 1;
-                mem_vis_signal                   <= `MEM_READ; // 读取单个数据
-                _current_addr                    <= _current_addr+CACHE_LINE_SIZE;
-                valid[load_cache_line_index]     <= 1;
-                tag[load_cache_line_index]       <= load_addr_tag;
-                data_line[load_cache_line_index] <= mem_data;
+                if (mem_status == `MEM_DATA_FINISHED) begin
+                    CNT                              <= 1;
+                    mem_vis_signal                   <= `MEM_READ; // 读取单个数据
+                    _current_addr                    <= _current_addr+CACHE_LINE_SIZE;
+                    valid[load_cache_line_index]     <= 1;
+                    tag[load_cache_line_index]       <= load_addr_tag;
+                    data_line[load_cache_line_index] <= mem_data;
+                end
+                else begin
+                    CNT                <= 2;
+                    d_cache_vis_status <= `D_CACHE_STALL;
+                end
             end
             // 工作中，处理mem数据
             // load:填充两个cache line
             // store:直接向内存指定位置写该数据
             1:begin
-                CNT                <= 0;
-                mem_vis_signal     <= `MEM_NOP;
-                d_cache_vis_status <= `L_S_FINISHED;
-                case (task_type)
-                    `D_CACHE_LOAD:begin
-                        valid[extra_cache_line_index]     <= 1;
-                        tag[extra_cache_line_index]       <= extra_addr_tag;
-                        data_line[extra_cache_line_index] <= mem_data;
-                        data                              <= indirect_data;
-                    end
-                    `D_CACHE_STORE:begin
-                        // todo?
-                    end
-                    default:
-                    $display("[ERROR]:unexpected task_type when cnt == 1 in data cache\n");
-                endcase
+                if (mem_status == `MEM_DATA_FINISHED) begin
+                    CNT                <= 0;
+                    mem_vis_signal     <= `MEM_NOP;
+                    d_cache_vis_status <= `L_S_FINISHED;
+                    case (task_type)
+                        `D_CACHE_LOAD:begin
+                            valid[extra_cache_line_index]     <= 1;
+                            tag[extra_cache_line_index]       <= extra_addr_tag;
+                            data_line[extra_cache_line_index] <= mem_data;
+                            data                              <= indirect_data;
+                        end
+                        `D_CACHE_STORE:begin
+                            // todo?
+                        end
+                        default:
+                        $display("[ERROR]:unexpected task_type when cnt == 1 in data cache\n");
+                    endcase
+                end
+                else begin
+                    CNT                <= 1;
+                    d_cache_vis_status <= `D_CACHE_STALL;
+                end
             end
             // 工作完成或任务发布
             0:begin

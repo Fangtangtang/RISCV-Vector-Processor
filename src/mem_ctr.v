@@ -99,7 +99,7 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
             2:begin
                 if (d_cache_status == `D_CACHE_RESTING)begin
                     CNT            <= 1;
-                    mem_vis_status <= `MEM_WORKING;
+                    mem_vis_status <= `MEM_CTR_WORKING;
                     case (task_type)
                         `MEM_CTR_LOAD:begin
                             if (!visit_vector||(_mask[current_length]||_vm))begin
@@ -134,7 +134,7 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
                 else begin
                     CNT              <= 2;
                     cache_vis_signal <= `D_CACHE_NOP;
-                    mem_vis_status   <= `MEM_STALL;
+                    mem_vis_status   <= `MEM_CTR_STALL;
                 end
             end
             // 工作中
@@ -162,14 +162,14 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
                                 endcase
                                 if (current_length+1 == requested_length)begin
                                     CNT              <= 0;
-                                    mem_vis_status   <= `MEM_FINISHED;
+                                    mem_vis_status   <= `MEM_CTR_FINISHED;
                                     cache_vis_signal <= `D_CACHE_NOP;
                                 end
                             end
                             else begin
                                 scalar_data      <= mem_data;
                                 CNT              <= 0;
-                                mem_vis_status   <= `MEM_FINISHED;
+                                mem_vis_status   <= `MEM_CTR_FINISHED;
                                 cache_vis_signal <= `D_CACHE_NOP;
                             end
                         end
@@ -179,7 +179,7 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
                                 if (current_length+1 < requested_length)begin
                                     current_length <= current_length+1;
                                     CNT            <= 1;
-                                    mem_vis_status <= `MEM_WORKING;
+                                    mem_vis_status <= `MEM_CTR_WORKING;
                                     if (_mask[current_length]||_vm)begin
                                         cache_vis_signal <= `D_CACHE_LOAD;
                                     end
@@ -194,7 +194,7 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
                         if (d_cache_status == `L_S_FINISHED)begin
                             if (!visit_vector||(current_length+1 == requested_length)) begin
                                 CNT              <= 0;
-                                mem_vis_status   <= `MEM_FINISHED;
+                                mem_vis_status   <= `MEM_CTR_FINISHED;
                                 cache_vis_signal <= `D_CACHE_NOP;
                             end
                         end
@@ -204,7 +204,7 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
                                 cache_written_data <= written_data;
                                 current_length     <= current_length+1;
                                 CNT                <= 1;
-                                mem_vis_status     <= `MEM_WORKING;
+                                mem_vis_status     <= `MEM_CTR_WORKING;
                                 if (_mask[current_length]||_vm)begin
                                     cache_vis_signal <= `D_CACHE_STORE;
                                 end
@@ -231,10 +231,10 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
                         current_addr        <= data_addr;
                         if (data_vis_signal == `MEM_CTR_NOP) begin
                             CNT            <= 0;
-                            mem_vis_status <= `MEM_FINISHED;
+                            mem_vis_status <= `MEM_CTR_FINISHED;
                             end else begin
                                 CNT            <= 2;
-                                mem_vis_status <= `MEM_WORKING;
+                                mem_vis_status <= `MEM_CTR_WORKING;
                                 if (is_vector) begin
                                     requested_length     <= length;
                                     _vm                  <= vm;
@@ -250,7 +250,7 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
                     end
                     else begin
                         task_type      <= `MEM_CTR_REST;
-                        mem_vis_status <= `MEM_RESTING;
+                        mem_vis_status <= `MEM_CTR_RESTING;
                     end
                 end
                 default:
