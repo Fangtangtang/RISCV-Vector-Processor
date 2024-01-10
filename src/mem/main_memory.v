@@ -2,6 +2,7 @@
 // MAIN MEMORY
 // 
 // 和cache直接交互，带宽4bytes
+// 从内存中读出的数据仍然为内存中顺序
 // #############################################################################################################################
 `include"src/defines.v"
 
@@ -16,7 +17,7 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
                     input [ADDR_WIDTH-1:0] i_cache_mem_vis_addr,
                     input [ADDR_WIDTH-1:0] d_cache_mem_vis_addr,
                     input [ENTRY_INDEX_SIZE:0] length,
-                    input [LEN-1:0] writen_data,
+                    input [LEN-1:0] written_data,
                     output [LEN-1:0] mem_data,
                     output reg [1:0] mem_status);
     
@@ -47,7 +48,7 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
             end
             `MEM_READ:begin
                 mem_status <= `MEM_FINISHED;
-                read_data  <= {storage[i_cache_mem_vis_addr+3],storage[i_cache_mem_vis_addr+2],storage[i_cache_mem_vis_addr+1],storage[i_cache_mem_vis_addr]};
+                read_data  <= {storage[i_cache_mem_vis_addr],storage[i_cache_mem_vis_addr+1],storage[i_cache_mem_vis_addr+2],storage[i_cache_mem_vis_addr+3]};
             end
             `MEM_WRITE: begin
                 if (CNT == 0) begin
@@ -64,10 +65,10 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
                     CNT        <= CNT + 1;
                     mem_status <= `MEM_DATA_WORKING;
                 end
-                storage[d_cache_mem_vis_addr+3] <= writen_data[31:24];
-                storage[d_cache_mem_vis_addr+2] <= writen_data[23:16];
-                storage[d_cache_mem_vis_addr+1] <= writen_data[15:8];
-                storage[d_cache_mem_vis_addr]   <= writen_data[7:0];
+                storage[d_cache_mem_vis_addr]   <= written_data[31:24];
+                storage[d_cache_mem_vis_addr+1] <= written_data[23:16];
+                storage[d_cache_mem_vis_addr+2] <= written_data[15:8];
+                storage[d_cache_mem_vis_addr+3] <= written_data[7:0];
             end
             `MEM_READ_BURST:begin
                 if (CNT == 0) begin
@@ -82,7 +83,7 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
                     CNT        <= CNT + 1;
                     mem_status <= `MEM_DATA_WORKING;
                 end
-                read_data <= {storage[d_cache_mem_vis_addr+3],storage[d_cache_mem_vis_addr+2],storage[d_cache_mem_vis_addr+1],storage[d_cache_mem_vis_addr]};
+                read_data <= {storage[d_cache_mem_vis_addr],storage[d_cache_mem_vis_addr+1],storage[d_cache_mem_vis_addr+2],storage[d_cache_mem_vis_addr+3]};
             end
             default:
             $display("[ERROR]:unexpected mem_tast_type in main memory\n");

@@ -3,6 +3,8 @@
 // 
 // - cache size = 2，暂时仅作为memory controller
 // - inst_fetch_enable能中断flash
+// 
+// 从内存中读出的数据在这里转变为正确顺序
 // #############################################################################################################################
 `include"src/defines.v"
 
@@ -20,6 +22,9 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                           input [1:0] mem_status,
                           output [ADDR_WIDTH-1:0] mem_vis_addr, // 访存地址
                           output reg [1:0] mem_vis_signal);
+    
+    // reordered data
+    wire reorder_mem_data = {mem_data[7:0],mem_data[15:8],mem_data[23:16],mem_data[31:24]};
     
     // 全关联cache
     reg valid [I_CACHE_SIZE-1:0];
@@ -116,13 +121,13 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
                         mem_vis_signal <= `MEM_NOP;
                         // 取指令
                         if (!_flash) begin
-                            _instruction      <= mem_data;
+                            _instruction      <= reorder_mem_data;
                             CNT               <= 2;
                             inst_fetch_status <= `IF_FINISHED;
                             _flash            <= `TRUE;
                         end
                         // flash
-                        inst[_current_index] <= mem_data;
+                        inst[_current_index] <= reorder_mem_data;
                         // flash结束
                         if (_current_index == I_CACHE_SIZE-1) begin
                             CNT               <= 0;

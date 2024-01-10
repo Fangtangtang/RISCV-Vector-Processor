@@ -75,6 +75,21 @@
 `define     D_CACHE_RESTING      2'b11
 
 
+// MEMORY CONTROLER
+// -------------------------------------------------------------------------
+// task type
+`define     MEM_NOP             2'b00
+`define     MEM_LOAD            2'b01
+`define     MEM_STORE           2'b10
+`define     MEM_REST            2'b11
+
+
+// working status
+`define     MEM_STALL           2'b00
+`define     MEM_WORKING         2'b01
+`define     MEM_FINISHED        2'b10
+`define     MEM_RESTING         2'b11
+
 // Reg File
 // -------------------------------------------------------------------------
 // working status

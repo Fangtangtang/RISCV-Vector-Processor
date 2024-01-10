@@ -6,3 +6,4 @@ testspace
 README.md
 rvv-spec-1.0.md
 *.out
+src/mem/d_cache1.v

@@ -523,6 +523,9 @@ module CORE#(parameter ADDR_WIDTH = 17,
     
     // STAGE4 : MEMORY VISIT
     // - visit memory
+    // | + 标量访存照常
+    // | + 带mask的向量访存，仅load/store被激活的数据位
+    // |   load未激活部分用默认数值填充，write back带mask
     // - pc update
     // ---------------------------------------------------------------------------------------------
     reg [LEN-1:0] increased_pc;
