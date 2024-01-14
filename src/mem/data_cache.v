@@ -3,7 +3,7 @@
 // 
 // 直接映射cache
 // 
-// 接受来自memory controler的访存请求
+// 接受来自memory controller的访存请求
 // - 组合逻辑判断是否hit并反馈
 // 如果miss，向memory发请求
 // 

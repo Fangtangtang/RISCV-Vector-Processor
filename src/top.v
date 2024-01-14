@@ -138,7 +138,7 @@ module top#(parameter SIM = 0,
     );
     
     
-    // MEMORY CONTROLER
+    // MEMORY CONTROLLER
     // ---------------------------------------------------------------------------------------------
     // outports wire
     wire [LEN-1:0]             	scalar_data;
@@ -150,7 +150,7 @@ module top#(parameter SIM = 0,
     wire [2:0]                 	d_cache_data_type;
     wire [1:0]                 	cache_vis_signal;
     
-    MEMORY_CONTROLER #(
+    MEMORY_CONTROLLER #(
     .ADDR_WIDTH       	(ADDR_WIDTH),
     .LEN              	(LEN),
     .BYTE_SIZE        	(BYTE_SIZE),
@@ -159,7 +159,7 @@ module top#(parameter SIM = 0,
     .CACHE_SIZE       	(CACHE_SIZE),
     .CACHE_INDEX_SIZE 	(CACHE_INDEX_SIZE)
     )
-    memory_controler(
+    memory_controller(
     .clk                 	(clk),
     .data_addr           	(mem_data_addr),
     .mem_access_enabled  	(mem_vis_enabled),

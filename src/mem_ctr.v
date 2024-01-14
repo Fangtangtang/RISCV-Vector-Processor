@@ -1,10 +1,10 @@
 // #############################################################################################################################
-// MEMORY CONTROLER
+// MEMORY CONTROLLER
 // 
 // 控制数据访存
 // 连接core和data cache
 // 
-// - core发来标量或向量访存请求，由memory controler拆成数据类型+首地址访存
+// - core发来标量或向量访存请求，由memory controller拆成数据类型+首地址访存
 // | + 标量访存照常
 // | + 带mask的向量访存，仅load/store被激活的数据位
 // |   load未激活部分用默认数值0填充，write back带mask
@@ -16,7 +16,7 @@
 // #############################################################################################################################
 `include"src/defines.v"
 
-module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
+module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                          parameter LEN = 32,
                          parameter BYTE_SIZE = 8,
                          parameter VECTOR_SIZE = 8,
@@ -128,7 +128,7 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
                             end
                         end
                         default:
-                        $display("[ERROR]:unexpected task_type when cnt == 2 in memory controler\n");
+                        $display("[ERROR]:unexpected task_type when cnt == 2 in memory controller\n");
                     endcase
                 end
                 else begin
@@ -215,7 +215,7 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
                         end
                     end
                     default:
-                    $display("[ERROR]:unexpected task_type when cnt == 1 in memory controler\n");
+                    $display("[ERROR]:unexpected task_type when cnt == 1 in memory controller\n");
                 endcase
             end
             // 工作完成或任务发布
@@ -255,7 +255,7 @@ module MEMORY_CONTROLER#(parameter ADDR_WIDTH = 17,
                 end
             end
             default:
-            $display("[ERROR]:unexpected CNT in memory controler\n");
+            $display("[ERROR]:unexpected CNT in memory controller\n");
         endcase
     end
     
