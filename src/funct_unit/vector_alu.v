@@ -13,8 +13,9 @@
 `include"src/defines.v"
 
 module VECTOR_ALU#(parameter ADDR_WIDTH = 17,
-                   parameter LEN = 32,
-                   parameter LONGEST_LEN = 64,
+                   parameter DATA_LEN = 32,                // 内存数据单元
+                   parameter SCALAR_REG_LEN = 64,          // 标量寄存器
+                   parameter LONGEST_LEN = 64,             // 标量寄存器
                    parameter BYTE_SIZE = 8,
                    parameter VECTOR_SIZE = 8,
                    parameter ENTRY_INDEX_SIZE = 3,
@@ -26,8 +27,8 @@ module VECTOR_ALU#(parameter ADDR_WIDTH = 17,
                    input [LONGEST_LEN - 1:0] vs2,
                    input [LONGEST_LEN - 1:0] vs3,
                    input mask,
-                   input [LEN - 1:0] imm,                  // 立即数，符号位拓展
-                   input [LEN - 1:0] rs,                   // 标量操作数，符号位拓展
+                   input [SCALAR_REG_LEN - 1:0] imm,       // 立即数，符号位拓展
+                   input [SCALAR_REG_LEN - 1:0] rs,        // 标量操作数，符号位拓展
                    input [2:0] alu_signal,
                    input [1:0] vec_operand_type,
                    input is_mask_operation,
@@ -42,8 +43,8 @@ module VECTOR_ALU#(parameter ADDR_WIDTH = 17,
     assign e_byte_vs1 = vs1;
     assign e_byte_vs2 = vs2;
     assign e_byte_vs3 = vs3;
-    assign e_byte_imm = {{32{imm[31]}},imm};
-    assign e_byte_rs  = {{32{rs[31]}},rs};
+    assign e_byte_imm = imm;
+    assign e_byte_rs  = rs;
     
     wire [31:0] f_byte_vs1;
     wire [31:0] f_byte_vs2;
@@ -53,8 +54,8 @@ module VECTOR_ALU#(parameter ADDR_WIDTH = 17,
     assign f_byte_vs1 = vs1[31:0];
     assign f_byte_vs2 = vs2[31:0];
     assign f_byte_vs3 = vs3[31:0];
-    assign f_byte_imm = imm;
-    assign f_byte_rs  = rs;
+    assign f_byte_imm = imm[31:0];
+    assign f_byte_rs  = rs[31:0];
     
     wire [15:0] t_byte_vs1;
     wire [15:0] t_byte_vs2;

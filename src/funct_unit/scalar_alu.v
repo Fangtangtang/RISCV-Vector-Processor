@@ -6,17 +6,18 @@
 `include "src/defines.v"
 
 module SCALAR_ALU#(parameter ADDR_WIDTH = 17,
-                   parameter LEN = 32,
+                   parameter DATA_LEN = 32,                  // 内存数据单元
+                   parameter SCALAR_REG_LEN = 64,            // 标量寄存器
                    parameter BYTE_SIZE = 8,
                    parameter VECTOR_SIZE = 8,
                    parameter ENTRY_INDEX_SIZE = 3)
-                  (input [LEN - 1:0] rs1,
-                   input [LEN - 1:0] rs2,
-                   input [LEN - 1:0] imm,
-                   input [LEN - 1:0] pc,
+                  (input [SCALAR_REG_LEN - 1:0] rs1,
+                   input [SCALAR_REG_LEN - 1:0] rs2,
+                   input [SCALAR_REG_LEN - 1:0] imm,
+                   input [DATA_LEN - 1:0] pc,
                    input [2:0] alu_signal,
                    input [3:0] func_code,
-                   output reg [LEN - 1:0] result,
+                   output reg [SCALAR_REG_LEN - 1:0] result,
                    output reg [1:0] sign_bits);
     
     always @(*) begin

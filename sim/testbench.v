@@ -16,7 +16,7 @@ module testbench();
     
     top#(
     .SIM(1),
-    .LEN(32)
+    .DATA_LEN(32)
     )
     top_(
     .EXCLK(clk),

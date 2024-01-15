@@ -10,27 +10,28 @@
 `include"src/defines.v"
 
 module SCALAR_REGISTER_FILE#(parameter ADDR_WIDTH = 17,
-                             parameter LEN = 32,
+                             parameter DATA_LEN = 32,              // 内存数据单元
+                             parameter SCALAR_REG_LEN = 64,        // 标量寄存器
                              parameter BYTE_SIZE = 8,
                              parameter VECTOR_SIZE = 8,
                              parameter ENTRY_INDEX_SIZE = 3)
-                            (input wire clk,                 // clock
+                            (input wire clk,                       // clock
                              input rst,
                              input rdy_in,
-                             input [1:0] rf_signal,          // nop、读、写
-                             input wire [4:0] rs1,           // index of rs1
-                             input wire [4:0] rs2,           // index of rs2
-                             input wire [4:0] rd,            // index of rd
-                             input [LEN-1:0] data,           // write back data
+                             input [1:0] rf_signal,                // nop、读、写
+                             input wire [4:0] rs1,                 // index of rs1
+                             input wire [4:0] rs2,                 // index of rs2
+                             input wire [4:0] rd,                  // index of rd
+                             input [SCALAR_REG_LEN-1:0] data,      // write back data
                              input write_back_enabled,
-                             output [LEN-1:0] rs1_data,
-                             output [LEN-1:0] rs2_data,
+                             output [SCALAR_REG_LEN-1:0] rs1_data,
+                             output [SCALAR_REG_LEN-1:0] rs2_data,
                              output [1:0] rf_status);
     
     // 32 registers
-    reg [4:0]               rs1_index;
-    reg [4:0]               rs2_index;
-    reg [LEN-1:0]           register[31:0];
+    reg [4:0]                   rs1_index;
+    reg [4:0]                   rs2_index;
+    reg [SCALAR_REG_LEN-1:0]          register[31:0];
     
     reg [1:0]               status;
     assign rf_status = status;

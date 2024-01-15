@@ -6,21 +6,22 @@
 `include "src/defines.v"
 
 module DECODER#(parameter ADDR_WIDTH = 17,
-                parameter LEN = 32,
+                parameter DATA_LEN = 32,
+                parameter SCALAR_REG_LEN = 64,                     // 标量寄存器
                 parameter BYTE_SIZE = 8,
                 parameter VECTOR_SIZE = 8,
                 parameter ENTRY_INDEX_SIZE = 3)
                (input chip_enabled,
-                input wire [LEN-1:0] instruction,
+                input wire [DATA_LEN-1:0] instruction,
                 output wire is_vector_instruction,
                 output wire [4:0] reg1_index,
                 output wire [4:0] reg2_index,
                 output wire [4:0] reg3_index,
                 output wire vm,
-                output wire [10:0] zimm,                   // 在vector指令中可能被拆解
-                output wire [3:0] output_func_code,        // 包含funct3
-                output wire [5:0] output_func6,            // 在vector指令中可能被拆解
-                output wire [LEN-1:0] output_immediate,
+                output wire [10:0] zimm,                           // 在vector指令中可能被拆解
+                output wire [3:0] output_func_code,                // 包含funct3
+                output wire [5:0] output_func6,                    // 在vector指令中可能被拆解
+                output wire [SCALAR_REG_LEN-1:0] output_immediate,
                 output wire [2:0] output_exe_signal,
                 output wire [1:0] output_vec_operand_type,
                 output wire [1:0] output_mem_vis_signal,
@@ -71,24 +72,24 @@ module DECODER#(parameter ADDR_WIDTH = 17,
     wire sign_bit;
     assign sign_bit = instruction[31];
     
-    wire signed [LEN-1:0] V_imm = {{27{instruction[19]}},instruction[19:15]};
-    wire signed [LEN-1:0] R_imm = 0;
-    wire signed [LEN-1:0] I_imm = {{20{sign_bit}}, instruction[31:20]};
-    wire signed [LEN-1:0] S_imm = {{20{sign_bit}}, instruction[31:25], instruction[11:7]};
+    wire signed [SCALAR_REG_LEN-1:0] V_imm = {{59{instruction[19]}},instruction[19:15]};
+    wire signed [SCALAR_REG_LEN-1:0] R_imm = 0;
+    wire signed [SCALAR_REG_LEN-1:0] I_imm = {{52{sign_bit}}, instruction[31:20]};
+    wire signed [SCALAR_REG_LEN-1:0] S_imm = {{52{sign_bit}}, instruction[31:25], instruction[11:7]};
     // B:在立即数中已经处理移位
-    wire signed [LEN-1:0] B_imm = {{19{sign_bit}}, sign_bit, instruction[7], instruction[30:25], instruction[11:8],1'b0};
-    wire signed [LEN-1:0] U_imm = {instruction[31:12],{12{1'b0}}};
+    wire signed [SCALAR_REG_LEN-1:0] B_imm = {{51{sign_bit}}, sign_bit, instruction[7], instruction[30:25], instruction[11:8],1'b0};
+    wire signed [SCALAR_REG_LEN-1:0] U_imm = {{32{sign_bit}},instruction[31:12],{12{1'b0}}};
     // J:在立即数中已经处理移位
-    wire signed [LEN-1:0] J_imm = {{12{sign_bit}}, instruction[31], instruction[19:12], instruction[20], instruction[30:21],1'b0};
+    wire signed [SCALAR_REG_LEN-1:0] J_imm = {{44{sign_bit}}, instruction[31], instruction[19:12], instruction[20], instruction[30:21],1'b0};
     
-    reg [LEN-1:0]   immediate;
-    reg [2:0]       exe_signal;
-    reg [1:0]       vec_operand_type;
-    reg [1:0]       mem_vis_signal;
-    reg [1:0]       data_size;
-    reg [1:0]       vector_l_s_type;
-    reg [1:0]       branch_signal;
-    reg [1:0]       wb_signal;
+    reg [SCALAR_REG_LEN-1:0]    immediate;
+    reg [2:0]                   exe_signal;
+    reg [1:0]                   vec_operand_type;
+    reg [1:0]                   mem_vis_signal;
+    reg [1:0]                   data_size;
+    reg [1:0]                   vector_l_s_type;
+    reg [1:0]                   branch_signal;
+    reg [1:0]                   wb_signal;
     
     assign output_immediate        = immediate;
     assign output_exe_signal       = exe_signal;
@@ -184,7 +185,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                                 exe_signal       = `BINARY;
                                 vec_operand_type = `VEC_VEC;
                             end
-                            `OPMVV:begin // mask vec-vec    
+                            `OPMVV:begin // mask vec-vec
                                 exe_signal       = `BINARY;
                                 vec_operand_type = `VEC_VEC;
                             end
@@ -196,7 +197,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                                 exe_signal       = `BINARY;
                                 vec_operand_type = `VEC_SCALAR;
                             end
-                            `OPMVX:begin // mask vec-scalar   
+                            `OPMVX:begin // mask vec-scalar
                                 exe_signal       = `BINARY;
                                 vec_operand_type = `VEC_SCALAR;
                             end

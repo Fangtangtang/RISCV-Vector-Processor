@@ -13,34 +13,35 @@
 `include"src/defines.v"
 
 module VECTOR_REGISTER_FILE#(parameter ADDR_WIDTH = 17,
-                             parameter LEN = 32,
+                             parameter DATA_LEN = 32,                      // 内存数据单元
+                             parameter SCALAR_REG_LEN = 64,                // 标量寄存器
                              parameter BYTE_SIZE = 8,
                              parameter VECTOR_SIZE = 8,
                              parameter ENTRY_INDEX_SIZE = 3)
-                            (input wire clk,                          // clock
+                            (input wire clk,                               // clock
                              input rst,
                              input rdy_in,
-                             input [1:0] rf_signal,                   // nop、读、写
-                             input wire [4:0] rs1,                    // index of rs1
-                             input wire [4:0] rs2,                    // index of rs2
-                             input wire [4:0] rs3,                    // index of rs3(rd)
-                             input wire [4:0] rd,                     // index of rd
+                             input [1:0] rf_signal,                        // nop、读、写
+                             input wire [4:0] rs1,                         // index of rs1
+                             input wire [4:0] rs2,                         // index of rs2
+                             input wire [4:0] rs3,                         // index of rs3(rd)
+                             input wire [4:0] rd,                          // index of rd
                              input vm,
-                             input [VECTOR_SIZE*LEN - 1:0] mask,
-                             input [VECTOR_SIZE*LEN - 1:0] data,      // write back data
-                             input [LEN-1:0] length,
+                             input [VECTOR_SIZE*DATA_LEN - 1:0] mask,
+                             input [VECTOR_SIZE*DATA_LEN - 1:0] data,      // write back data
+                             input [DATA_LEN-1:0] length,
                              input [2:0] data_type,
                              input write_back_enabled,
-                             output [VECTOR_SIZE*LEN - 1:0] v0_data,
-                             output [VECTOR_SIZE*LEN - 1:0] rs1_data,
-                             output [VECTOR_SIZE*LEN - 1:0] rs2_data,
-                             output [VECTOR_SIZE*LEN - 1:0] rs3_data,
+                             output [VECTOR_SIZE*DATA_LEN - 1:0] v0_data,
+                             output [VECTOR_SIZE*DATA_LEN - 1:0] rs1_data,
+                             output [VECTOR_SIZE*DATA_LEN - 1:0] rs2_data,
+                             output [VECTOR_SIZE*DATA_LEN - 1:0] rs3_data,
                              output [1:0] rf_status);
     // 32 registers
     reg [4:0]                   rs1_index;
     reg [4:0]                   rs2_index;
     reg [4:0]                   rs3_index;
-    reg [VECTOR_SIZE*LEN-1:0]   register[31:0];
+    reg [VECTOR_SIZE*DATA_LEN-1:0]   register[31:0];
     
     reg [1:0]                   status;
     assign rf_status = status;
@@ -50,7 +51,7 @@ module VECTOR_REGISTER_FILE#(parameter ADDR_WIDTH = 17,
     assign rs2_data = register[rs2_index];
     assign rs3_data = register[rs3_index];
     
-    reg [VECTOR_SIZE*LEN-1:0] writen_data;
+    reg [VECTOR_SIZE*DATA_LEN-1:0] writen_data;
     
     
     always @(posedge clk) begin

@@ -25,7 +25,8 @@
 
 
 module CORE#(parameter ADDR_WIDTH = 17,
-             parameter LEN = 32,
+             parameter DATA_LEN = 32,                                 // 内存数据单元
+             parameter SCALAR_REG_LEN = 64,                           // 标量寄存器
              parameter BYTE_SIZE = 8,
              parameter VECTOR_SIZE = 8,
              parameter ENTRY_INDEX_SIZE = 3,
@@ -33,15 +34,15 @@ module CORE#(parameter ADDR_WIDTH = 17,
             (input clk,
              input rst,
              input rdy_in,
-             input [LEN-1:0] instruction,
-             input [LEN-1:0] mem_read_scalar_data,
-             input [LEN*VECTOR_SIZE-1:0] mem_read_vector_data,
+             input [DATA_LEN-1:0] instruction,
+             input [SCALAR_REG_LEN-1:0] mem_read_scalar_data,
+             input [DATA_LEN*VECTOR_SIZE-1:0] mem_read_vector_data,
              input [1:0] i_cache_vis_status,
              input [1:0] d_cache_vis_status,
-             output [LEN-1:0] mem_write_scalar_data,
+             output [SCALAR_REG_LEN-1:0] mem_write_scalar_data,
              output vm,
-             output [LEN*VECTOR_SIZE-1:0] mask,
-             output [LEN*VECTOR_SIZE-1:0] mem_write_vector_data,
+             output [DATA_LEN*VECTOR_SIZE-1:0] mask,
+             output [DATA_LEN*VECTOR_SIZE-1:0] mem_write_vector_data,
              output [ENTRY_INDEX_SIZE:0] vector_length,
              output [ADDR_WIDTH-1:0] mem_inst_addr,
              output [ADDR_WIDTH-1:0] mem_data_addr,
@@ -54,7 +55,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     // REGISTER
     // ---------------------------------------------------------------------------------------------
     // Program Counter
-    reg [LEN-1:0]   PC;
+    reg [DATA_LEN-1:0]   PC;
     
     // Control and Status Register
     
@@ -62,7 +63,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     reg [31:0] VL;
     
     // vlenb:`VLEN`/8 (vector register length in bytes), read only
-    reg [31:0] VLENB = LEN*VECTOR_SIZE/BYTE_SIZE;
+    reg [31:0] VLENB = DATA_LEN*VECTOR_SIZE/BYTE_SIZE;
     
     // vtype:vector data type register
     reg [31:0] VTYPE;
@@ -74,47 +75,47 @@ module CORE#(parameter ADDR_WIDTH = 17,
     // Transfer Register
     
     // if-id
-    reg [LEN-1:0]               IF_ID_PC;
+    reg [DATA_LEN-1:0]               IF_ID_PC;
     
     // id-exe
-    reg [LEN-1:0]               ID_EXE_PC;
+    reg [DATA_LEN-1:0]               ID_EXE_PC;
     
-    reg [LEN-1:0]               ID_EXE_RS1;              // 从register file读取到的rs1数据
-    reg [LEN-1:0]               ID_EXE_RS2;              // 从register file读取到的rs2数据
-    reg [VECTOR_SIZE*LEN - 1:0] ID_EXE_MASK;
-    reg [VECTOR_SIZE*LEN - 1:0] ID_EXE_VS1;
-    reg [VECTOR_SIZE*LEN - 1:0] ID_EXE_VS2;
-    reg [VECTOR_SIZE*LEN - 1:0] ID_EXE_VS3;
+    reg [SCALAR_REG_LEN-1:0]         ID_EXE_RS1;              // 从register file读取到的rs1数据
+    reg [SCALAR_REG_LEN-1:0]         ID_EXE_RS2;              // 从register file读取到的rs2数据
+    reg [VECTOR_SIZE*DATA_LEN - 1:0] ID_EXE_MASK;
+    reg [VECTOR_SIZE*DATA_LEN - 1:0] ID_EXE_VS1;
+    reg [VECTOR_SIZE*DATA_LEN - 1:0] ID_EXE_VS2;
+    reg [VECTOR_SIZE*DATA_LEN - 1:0] ID_EXE_VS3;
     
-    reg                         ID_EXE_VM;
-    reg [31:0]                  ID_EXE_VL;
-    reg [31:0]                  ID_EXE_VTYPE;
-    wire [2:0]                  ID_EXE_VSEW  = ID_EXE_VTYPE[5:3];
-    wire [2:0]                  ID_EXE_VLMUL = ID_EXE_VTYPE[2:0];
+    reg                             ID_EXE_VM;
+    reg [31:0]                      ID_EXE_VL;
+    reg [31:0]                      ID_EXE_VTYPE;
+    wire [2:0]                      ID_EXE_VSEW  = ID_EXE_VTYPE[5:3];
+    wire [2:0]                      ID_EXE_VLMUL = ID_EXE_VTYPE[2:0];
     
-    reg [LEN-1:0]               ID_EXE_IMM;              // immediate generator提取的imm
-    reg [4:0]                   ID_EXE_RD_INDEX;         // 记录的rd位置
-    reg [3:0]                   ID_EXE_FUNC_CODE;        // scalar func部分
-    reg [1:0]                   ID_EXE_VEC_OPERAND_TYPE;
-    reg [4:0]                   ID_EXE_EXT_TYPE;
-    reg [5:0]                   ID_EXE_FUNCT6;
+    reg [SCALAR_REG_LEN-1:0]        ID_EXE_IMM;              // immediate generator提取的imm
+    reg [4:0]                       ID_EXE_RD_INDEX;         // 记录的rd位置
+    reg [3:0]                       ID_EXE_FUNC_CODE;        // scalar func部分
+    reg [1:0]                       ID_EXE_VEC_OPERAND_TYPE;
+    reg [4:0]                       ID_EXE_EXT_TYPE;
+    reg [5:0]                       ID_EXE_FUNCT6;
     
-    reg                         ID_EXE_IS_VEC_INST;
-    reg [2:0]                   ID_EXE_ALU_SIGNAL;        // ALU信号
-    reg [1:0]                   ID_EXE_MEM_VIS_SIGNAL;    // 访存信号
-    reg [1:0]                   ID_EXE_MEM_VIS_DATA_SIZE; // todo:scalar?
-    reg [1:0]                   ID_EXE_BRANCH_SIGNAL;
-    reg [1:0]                   ID_EXE_WB_SIGNAL;
+    reg                             ID_EXE_IS_VEC_INST;
+    reg [2:0]                       ID_EXE_ALU_SIGNAL;        // ALU信号
+    reg [1:0]                       ID_EXE_MEM_VIS_SIGNAL;    // 访存信号
+    reg [1:0]                       ID_EXE_MEM_VIS_DATA_SIZE; // todo:scalar?
+    reg [1:0]                       ID_EXE_BRANCH_SIGNAL;
+    reg [1:0]                       ID_EXE_WB_SIGNAL;
     
     // exe-mem
-    reg [LEN-1:0]               EXE_MEM_PC;
+    reg [DATA_LEN-1:0]               EXE_MEM_PC;
     
-    reg [LEN-1:0]               EXE_MEM_SCALAR_RESULT;       // scalar计算结果
-    reg [VECTOR_SIZE*LEN - 1:0] EXE_MEM_VECTOR_RESULT;       // vector计算结果
-    reg [VECTOR_SIZE*LEN - 1:0] EXE_MEM_MASK;
-    reg [1:0]                   EXE_MEM_ZERO_BITS;           // condition
-    reg [LEN-1:0]               EXE_MEM_RS2;                 // 可能用于写的标量数据
-    reg [VECTOR_SIZE*LEN - 1:0] EXE_MEM_VS3;                 // 可能用于写的向量数据
+    reg [SCALAR_REG_LEN-1:0]         EXE_MEM_SCALAR_RESULT;       // scalar计算结果
+    reg [VECTOR_SIZE*DATA_LEN - 1:0] EXE_MEM_VECTOR_RESULT;       // vector计算结果
+    reg [VECTOR_SIZE*DATA_LEN - 1:0] EXE_MEM_MASK;
+    reg [1:0]                        EXE_MEM_ZERO_BITS;           // condition
+    reg [SCALAR_REG_LEN-1:0]         EXE_MEM_RS2;                 // 可能用于写的标量数据
+    reg [VECTOR_SIZE*DATA_LEN - 1:0] EXE_MEM_VS3;                 // 可能用于写的向量数据
     
     reg                         EXE_MEM_VM;
     reg [31:0]                  EXE_MEM_VL;
@@ -122,7 +123,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     wire [2:0]                  EXE_MEM_VSEW  = EXE_MEM_VTYPE[5:3];
     wire [2:0]                  EXE_MEM_VLMUL = EXE_MEM_VTYPE[2:0];
     
-    reg [LEN-1:0]               EXE_MEM_IMM;
+    reg [SCALAR_REG_LEN-1:0]    EXE_MEM_IMM;
     reg [4:0]                   EXE_MEM_RD_INDEX;           // 记录的rd位置
     reg [3:0]                   EXE_MEM_FUNC_CODE;
     
@@ -134,13 +135,13 @@ module CORE#(parameter ADDR_WIDTH = 17,
     reg [1:0]                   EXE_MEM_WB_SIGNAL;
     
     // mem-wb
-    reg [LEN-1:0]               MEM_WB_PC;
+    reg [DATA_LEN-1:0]          MEM_WB_PC;
     
-    reg [LEN-1:0]               MEM_WB_MEM_SCALAR_DATA;     // 从内存读取的scalar数据
-    reg [VECTOR_SIZE*LEN - 1:0] MEM_WB_MEM_VECTOR_DATA;     // 从内存读取的vector数据
-    reg [VECTOR_SIZE*LEN - 1:0] MEM_WB_MASK;
-    reg [LEN-1:0]               MEM_WB_SCALAR_RESULT;       // scalar计算结果
-    reg [VECTOR_SIZE*LEN - 1:0] MEM_WB_VECTOR_RESULT;       // vector计算结果
+    reg [SCALAR_REG_LEN-1:0]         MEM_WB_MEM_SCALAR_DATA;     // 从内存读取的scalar数据
+    reg [VECTOR_SIZE*DATA_LEN - 1:0] MEM_WB_MEM_VECTOR_DATA;     // 从内存读取的vector数据
+    reg [VECTOR_SIZE*DATA_LEN - 1:0] MEM_WB_MASK;
+    reg [SCALAR_REG_LEN-1:0]         MEM_WB_SCALAR_RESULT;       // scalar计算结果
+    reg [VECTOR_SIZE*DATA_LEN - 1:0] MEM_WB_VECTOR_RESULT;       // vector计算结果
     
     reg                         MEM_WB_VM;
     reg [31:0]                  MEM_WB_VL;
@@ -196,26 +197,27 @@ module CORE#(parameter ADDR_WIDTH = 17,
     
     // DECODER
     // outports wire
-    wire           	decoder_is_vector_instruction;
-    wire [4:0]     	decoder_reg1_index;
-    wire [4:0]     	decoder_reg2_index;
-    wire [4:0]     	decoder_reg3_index;
-    wire           	decoder_vm;
-    wire [10:0]    	decoder_zimm;
-    wire [3:0]     	decoder_output_func_code;
-    wire [5:0]     	decoder_output_func6;
-    wire [LEN-1:0] 	decoder_output_immediate;
-    wire [2:0]     	decoder_output_exe_signal;
-    wire [1:0]     	decoder_output_vec_operand_type;
-    wire [1:0]     	decoder_output_mem_vis_signal;
-    wire [1:0]     	decoder_output_data_size;
-    wire [1:0]     	decoder_output_vector_l_s_type;
-    wire [1:0]     	decoder_output_branch_signal;
-    wire [1:0]     	decoder_output_wb_signal;
+    wire           	            decoder_is_vector_instruction;
+    wire [4:0]     	            decoder_reg1_index;
+    wire [4:0]     	            decoder_reg2_index;
+    wire [4:0]     	            decoder_reg3_index;
+    wire           	            decoder_vm;
+    wire [10:0]    	            decoder_zimm;
+    wire [3:0]     	            decoder_output_func_code;
+    wire [5:0]     	            decoder_output_func6;
+    wire [SCALAR_REG_LEN-1:0] 	decoder_output_immediate;
+    wire [2:0]     	            decoder_output_exe_signal;
+    wire [1:0]     	            decoder_output_vec_operand_type;
+    wire [1:0]     	            decoder_output_mem_vis_signal;
+    wire [1:0]     	            decoder_output_data_size;
+    wire [1:0]     	            decoder_output_vector_l_s_type;
+    wire [1:0]     	            decoder_output_branch_signal;
+    wire [1:0]     	            decoder_output_wb_signal;
     
     DECODER #(
     .ADDR_WIDTH       	(ADDR_WIDTH),
-    .LEN              	(LEN),
+    .DATA_LEN           (DATA_LEN),
+    .SCALAR_REG_LEN     (SCALAR_REG_LEN),
     .BYTE_SIZE        	(BYTE_SIZE),
     .VECTOR_SIZE      	(VECTOR_SIZE),
     .ENTRY_INDEX_SIZE 	(ENTRY_INDEX_SIZE)
@@ -244,20 +246,21 @@ module CORE#(parameter ADDR_WIDTH = 17,
     // SCALAR REGISTER FILE
     // inports wire
     wire [1:0]              scalar_rf_rf_signal;
-    reg [LEN-1:0]           scalar_rf_reg_write_data;
+    reg [SCALAR_REG_LEN-1:0]scalar_rf_reg_write_data;
     wire                    scalar_rf_write_back_enabled;
     
     assign  scalar_rf_rf_signal          = (WB_STATE_CTR&&scalar_rb_flag)? `SCALAR_RF_WRITE:`RF_NOP;
     assign  scalar_rf_write_back_enabled = WB_STATE_CTR;
     
     // outports wire
-    wire [LEN-1:0] 	        scalar_rf_rs1_data;
-    wire [LEN-1:0] 	        scalar_rf_rs2_data;
-    wire [1:0]     	        scalar_rf_rf_status;
+    wire [SCALAR_REG_LEN-1:0] 	scalar_rf_rs1_data;
+    wire [SCALAR_REG_LEN-1:0] 	scalar_rf_rs2_data;
+    wire [1:0]     	            scalar_rf_rf_status;
     
     SCALAR_REGISTER_FILE #(
     .ADDR_WIDTH       	(ADDR_WIDTH),
-    .LEN              	(LEN),
+    .DATA_LEN           (DATA_LEN),
+    .SCALAR_REG_LEN     (SCALAR_REG_LEN),
     .BYTE_SIZE        	(BYTE_SIZE),
     .VECTOR_SIZE      	(VECTOR_SIZE),
     .ENTRY_INDEX_SIZE 	(ENTRY_INDEX_SIZE)
@@ -279,23 +282,24 @@ module CORE#(parameter ADDR_WIDTH = 17,
     
     // VECTOR REGISTER FILE
     // inports wire
-    wire [1:0]                  vector_rf_rf_signal;
-    reg [VECTOR_SIZE*LEN-1:0]   vector_rf_reg_write_data;
-    wire                        vector_rf_write_back_enabled;
+    wire [1:0]                      vector_rf_rf_signal;
+    reg [VECTOR_SIZE*DATA_LEN-1:0]  vector_rf_reg_write_data;
+    wire                            vector_rf_write_back_enabled;
     
     assign  vector_rf_rf_signal          = (WB_STATE_CTR&&vector_rb_flag)? `VECTOR_RF_WRITE:`RF_NOP;
     assign  vector_rf_write_back_enabled = WB_STATE_CTR;
     
     // outports wire
-    wire [VECTOR_SIZE*LEN-1:0] 	vector_rf_v0_data;
-    wire [VECTOR_SIZE*LEN-1:0] 	vector_rf_rs1_data;
-    wire [VECTOR_SIZE*LEN-1:0] 	vector_rf_rs2_data;
-    wire [VECTOR_SIZE*LEN-1:0] 	vector_rf_rs3_data;
-    wire [1:0]                 	vector_rf_rf_status;
+    wire [VECTOR_SIZE*DATA_LEN-1:0] 	vector_rf_v0_data;
+    wire [VECTOR_SIZE*DATA_LEN-1:0] 	vector_rf_rs1_data;
+    wire [VECTOR_SIZE*DATA_LEN-1:0] 	vector_rf_rs2_data;
+    wire [VECTOR_SIZE*DATA_LEN-1:0] 	vector_rf_rs3_data;
+    wire [1:0]                 	        vector_rf_rf_status;
     
     VECTOR_REGISTER_FILE#(
     .ADDR_WIDTH       	(ADDR_WIDTH),
-    .LEN              	(LEN),
+    .DATA_LEN           (DATA_LEN),
+    .SCALAR_REG_LEN     (SCALAR_REG_LEN),
     .BYTE_SIZE        	(BYTE_SIZE),
     .VECTOR_SIZE      	(VECTOR_SIZE),
     .ENTRY_INDEX_SIZE 	(ENTRY_INDEX_SIZE)
@@ -324,12 +328,13 @@ module CORE#(parameter ADDR_WIDTH = 17,
     
     // SCALAR ALU
     // outports wire
-    wire [LEN-1:0] 	scalar_alu_result;
-    wire [1:0]     	scalar_alu_sign_bits;
+    wire [SCALAR_REG_LEN-1:0] 	scalar_alu_result;
+    wire [1:0]     	            scalar_alu_sign_bits;
     
     SCALAR_ALU #(
     .ADDR_WIDTH       	(ADDR_WIDTH),
-    .LEN              	(LEN),
+    .DATA_LEN           (DATA_LEN),
+    .SCALAR_REG_LEN     (SCALAR_REG_LEN),
     .BYTE_SIZE        	(BYTE_SIZE),
     .VECTOR_SIZE      	(VECTOR_SIZE),
     .ENTRY_INDEX_SIZE 	(ENTRY_INDEX_SIZE)
@@ -352,13 +357,14 @@ module CORE#(parameter ADDR_WIDTH = 17,
     wire                        vector_function_unit_execute;
     assign vector_function_unit_execute = ID_EXE_IS_VEC_INST;
     // outports wire
-    wire                       	vector_function_unit_is_mask;
-    wire [VECTOR_SIZE*LEN-1:0] 	vector_function_unit_result;
-    wire [1:0]                 	vector_function_unit_vector_alu_status;
+    wire                       	        vector_function_unit_is_mask;
+    wire [VECTOR_SIZE*DATA_LEN-1:0] 	vector_function_unit_result;
+    wire [1:0]                 	        vector_function_unit_vector_alu_status;
     
     VECTOR_FUNCTION_UNIT #(
     .ADDR_WIDTH       	(ADDR_WIDTH),
-    .LEN              	(LEN),
+    .DATA_LEN           (DATA_LEN),
+    .SCALAR_REG_LEN     (SCALAR_REG_LEN),
     .LONGEST_LEN      	(LONGEST_LEN),
     .BYTE_SIZE        	(BYTE_SIZE),
     .VECTOR_SIZE      	(VECTOR_SIZE),
@@ -547,8 +553,8 @@ module CORE#(parameter ADDR_WIDTH = 17,
     // |   load未激活部分用默认数值填充，write back带mask
     // - pc update
     // ---------------------------------------------------------------------------------------------
-    reg [LEN-1:0] increased_pc;
-    reg [LEN-1:0] special_pc;
+    reg [DATA_LEN-1:0] increased_pc;
+    reg [DATA_LEN-1:0] special_pc;
     
     reg branch_flag;
     

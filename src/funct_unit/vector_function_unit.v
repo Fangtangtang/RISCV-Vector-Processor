@@ -19,32 +19,33 @@
 `include "src/funct_unit/vector_alu.v"
 
 module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
-                             parameter LEN = 32,                    // int数据大小
-                             parameter LONGEST_LEN = 64,
-                             parameter BYTE_SIZE = 8,               // int数据数量
-                             parameter VECTOR_SIZE = 8,             // int数据数量
+                             parameter DATA_LEN = 32,                    // 内存数据单元
+                             parameter SCALAR_REG_LEN = 64,              // 标量寄存器
+                             parameter LONGEST_LEN = 64,                 // 标量寄存器
+                             parameter BYTE_SIZE = 8,                    // int数据数量
+                             parameter VECTOR_SIZE = 8,                  // int数据数量
                              parameter ENTRY_INDEX_SIZE = 3,
                              parameter LANE_SIZE = 2,
                              parameter LANE_INDEX_SIZE = 1)
-                            (input wire clk,                        // clock
+                            (input wire clk,                             // clock
                              input rst,
                              input rdy_in,
                              input execute,
                              input [2:0] VSEW,
                              input vm,
-                             input [LEN-1:0] length,
-                             input [VECTOR_SIZE*LEN - 1:0] vs1,
-                             input [VECTOR_SIZE*LEN - 1:0] vs2,
-                             input [VECTOR_SIZE*LEN - 1:0] vs3,
-                             input [VECTOR_SIZE*LEN - 1:0] mask,
-                             input [LEN - 1:0] imm,                 // 立即数
-                             input [LEN - 1:0] rs,                  // 标量操作数
+                             input [DATA_LEN-1:0] length,
+                             input [VECTOR_SIZE*DATA_LEN - 1:0] vs1,
+                             input [VECTOR_SIZE*DATA_LEN - 1:0] vs2,
+                             input [VECTOR_SIZE*DATA_LEN - 1:0] vs3,
+                             input [VECTOR_SIZE*DATA_LEN - 1:0] mask,
+                             input [SCALAR_REG_LEN - 1:0] imm,           // 立即数
+                             input [SCALAR_REG_LEN - 1:0] rs,            // 标量操作数
                              input [2:0] alu_signal,
                              input [1:0] vec_operand_type,
                              input [4:0] ext_type,
                              input [5:0] funct6,
                              output is_mask,
-                             output [VECTOR_SIZE*LEN - 1:0] result,
+                             output [VECTOR_SIZE*DATA_LEN - 1:0] result,
                              output [1:0] vector_alu_status);
     
     
@@ -52,12 +53,12 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     reg [2:0] current_vsew;
     reg masked;
     reg [ENTRY_INDEX_SIZE:0] vector_length; // 记录所需运算的向量长度
-    reg [VECTOR_SIZE*LEN - 1:0] vs1_;
-    reg [VECTOR_SIZE*LEN - 1:0] vs2_;
-    reg [VECTOR_SIZE*LEN - 1:0] vs3_;
-    reg [VECTOR_SIZE*LEN - 1:0] mask_;
-    reg [LEN - 1:0] imm_;
-    reg [LEN - 1:0] rs_;
+    reg [VECTOR_SIZE*DATA_LEN - 1:0] vs1_;
+    reg [VECTOR_SIZE*DATA_LEN - 1:0] vs2_;
+    reg [VECTOR_SIZE*DATA_LEN - 1:0] vs3_;
+    reg [VECTOR_SIZE*DATA_LEN - 1:0] mask_;
+    reg [SCALAR_REG_LEN - 1:0] imm_;
+    reg [SCALAR_REG_LEN - 1:0] rs_;
     reg [2:0] task_type;
     reg [1:0] operand_type;
     reg [5:0] alu_opcode;
@@ -66,7 +67,7 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     
     reg [ENTRY_INDEX_SIZE:0] next;          // 下一周期起始index
     
-    reg [VECTOR_SIZE*LEN - 1:0] alu_result;
+    reg [VECTOR_SIZE*DATA_LEN - 1:0] alu_result;
     
     reg [5:0] opcode;
     reg is_mask_op;
