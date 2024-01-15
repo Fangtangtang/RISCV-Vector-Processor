@@ -51,6 +51,7 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
     
     
     always @(posedge clk) begin
+        // if(mem_status==`MEM_RESTING)begin
         case (mem_tast_type)
             `MEM_NOP:begin
                 mem_status <= `MEM_RESTING;
@@ -58,14 +59,18 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
             `MEM_READ:begin
                 if (read_data_flag) begin
                     mem_status <= `MEM_DATA_FINISHED;
+                    read_data[31:24] <= storage[d_cache_mem_vis_addr];
+                    read_data[23:16] <= storage[d_cache_mem_vis_addr+1];
+                    read_data[15:8]  <= storage[d_cache_mem_vis_addr+2];
+                    read_data[7:0]   <= storage[d_cache_mem_vis_addr+3];
                 end
                 else begin
-                    mem_status <= `MEM_INST_FINISHED;
+                    mem_status       <= `MEM_INST_FINISHED;
+                    read_data[31:24] <= storage[i_cache_mem_vis_addr];
+                    read_data[23:16] <= storage[i_cache_mem_vis_addr+1];
+                    read_data[15:8]  <= storage[i_cache_mem_vis_addr+2];
+                    read_data[7:0]   <= storage[i_cache_mem_vis_addr+3];
                 end
-                read_data[31:24] <= storage[i_cache_mem_vis_addr];
-                read_data[23:16] <= storage[i_cache_mem_vis_addr+1];
-                read_data[15:8]  <= storage[i_cache_mem_vis_addr+2];
-                read_data[7:0]   <= storage[i_cache_mem_vis_addr+3];
             end
             `MEM_WRITE: begin
                 mem_status <= `MEM_DATA_FINISHED;
@@ -90,6 +95,10 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
             default:
             $display("[ERROR]:unexpected mem_tast_type in main memory\n");
         endcase
+        // end
+        // else begin
+        //         mem_status <= `MEM_RESTING;
+        // end
     end
     
 endmodule

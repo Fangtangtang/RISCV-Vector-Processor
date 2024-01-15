@@ -51,7 +51,7 @@ module top#(parameter SIM = 0,
     wire core_rdy = 1;
     
     localparam ADDR_WIDTH       = 17;
-    localparam BYTE_SIZE        = 32;
+    localparam BYTE_SIZE        = 8;
     localparam VECTOR_SIZE      = 8;
     localparam ENTRY_INDEX_SIZE = 3;
     localparam LONGEST_LEN      = 64;
@@ -177,7 +177,7 @@ module top#(parameter SIM = 0,
     .written_scalar_data 	(mem_write_scalar_data),
     .written_vector_data 	(mem_write_vector_data),
     .mem_vis_status      	(mem_ctr_vis_status),
-    .mem_data            	(mem_data),
+    .mem_data            	(data),
     .d_cache_status      	(d_cache_vis_status),
     .cache_written_data  	(cache_written_data),
     .write_length        	(d_cache_write_length),

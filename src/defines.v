@@ -47,7 +47,7 @@
 `define     MEM_RESTING         2'b00
 `define     MEM_INST_FINISHED   2'b01
 `define     MEM_DATA_FINISHED   2'b10
-// `define     MEM_FINISHED        2'b11
+`define     MEM_FINISHED        2'b11
 
 
 // INSTRUCTION CACHE

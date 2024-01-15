@@ -107,14 +107,14 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
             3:begin
                 if (d_cache_status == `D_CACHE_RESTING)begin
                     mem_vis_status <= `MEM_CTR_WORKING;
-                    case (requested_data_type)
-                        `EIGHT_BYTE:current_addr <= current_addr+4;
-                        `FOUR_BYTE:current_addr  <= current_addr+4;
-                        `TWO_BYTE:current_addr   <= current_addr+2;
-                        `ONE_BYTE:current_addr   <= current_addr+4;
-                        default:
-                        $display("[ERROR]:unexpected data type when cnt == 3 in memory controller\n");
-                    endcase
+                    // case (requested_data_type)
+                    //     `EIGHT_BYTE:current_addr <= current_addr+4;
+                    //     `FOUR_BYTE:current_addr  <= current_addr+4;
+                    //     `TWO_BYTE:current_addr   <= current_addr+2;
+                    //     `ONE_BYTE:current_addr   <= current_addr+4;
+                    //     default:
+                    //     $display("[ERROR]:unexpected data type when cnt == 3 in memory controller\n");
+                    // endcase
                     case (task_type)
                         `MEM_CTR_LOAD:begin
                             if (visit_vector)begin
@@ -195,7 +195,7 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                                 load_vector_data_slices[(current_length)<<4+3] <= mem_data[31:24];
                                 CNT                                            <= 1;
                                 cache_vis_signal                               <= `D_CACHE_LOAD;
-                                current_length                                 <= current_length+1;
+                                // current_length                                 <= current_length+1;
                             end
                             else begin
                                 scalar_data[DATA_LEN-1:0] <= mem_data;

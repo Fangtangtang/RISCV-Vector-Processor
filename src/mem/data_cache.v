@@ -34,7 +34,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                    output reg [DATA_LEN-1:0] mem_written_data,
                    output reg [2:0] written_data_type,
                    output [ENTRY_INDEX_SIZE:0] write_length,   // 1：单个
-                   output [ADDR_WIDTH-1:0] mem_vis_addr,       // 访存地址
+                   output reg [ADDR_WIDTH-1:0] mem_vis_addr,   // 访存地址
                    output reg [1:0] mem_vis_signal);
     
     localparam BYTE_SELECT     = 2;
@@ -46,9 +46,26 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     reg [TAG_SIZE-1:0] tag [CACHE_SIZE-1:0];
     reg [DATA_LEN-1:0] data_line [CACHE_SIZE-1:0]; // 一个cache line
     
-    wire addr_tag         = data_addr[ADDR_WIDTH-1:CACHE_INDEX_SIZE+BYTE_SELECT];
-    wire cache_line_index = data_addr[CACHE_INDEX_SIZE+BYTE_SELECT-1:BYTE_SELECT];
-    wire select_bit       = data_addr[BYTE_SELECT-1:0];
+    wire [DATA_LEN-1:0] storage0Value  = data_line[0];
+    wire [DATA_LEN-1:0] storage1Value  = data_line[1];
+    wire [DATA_LEN-1:0] storage2Value  = data_line[2];
+    wire [DATA_LEN-1:0] storage3Value  = data_line[3];
+    wire [DATA_LEN-1:0] storage4Value  = data_line[4];
+    wire [DATA_LEN-1:0] storage5Value  = data_line[5];
+    wire [DATA_LEN-1:0] storage6Value  = data_line[6];
+    wire [DATA_LEN-1:0] storage7Value  = data_line[7];
+    wire [DATA_LEN-1:0] storage8Value  = data_line[8];
+    wire [DATA_LEN-1:0] storage9Value  = data_line[9];
+    wire [DATA_LEN-1:0] storage10Value = data_line[10];
+    wire [DATA_LEN-1:0] storage11Value = data_line[11];
+    wire [DATA_LEN-1:0] storage12Value = data_line[12];
+    wire [DATA_LEN-1:0] storage13Value = data_line[13];
+    wire [DATA_LEN-1:0] storage14Value = data_line[14];
+    wire [DATA_LEN-1:0] storage15Value = data_line[15];
+    
+    wire [TAG_SIZE-1:0] addr_tag                 = data_addr[ADDR_WIDTH-1:CACHE_INDEX_SIZE+BYTE_SELECT];
+    wire [CACHE_INDEX_SIZE-1:0] cache_line_index = data_addr[CACHE_INDEX_SIZE+BYTE_SELECT-1:BYTE_SELECT];
+    wire [BYTE_SELECT-1:0] select_bit            = data_addr[BYTE_SELECT-1:0];
     
     // + hit判断
     // 单字节
@@ -150,10 +167,10 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     always @(*) begin
         case(requested_data_type)
             `ONE_BYTE:begin
-                indirect_data = {24'b0,indirect_byte};
+                indirect_data = {{24{indirect_byte[BYTE_SIZE-1]}},indirect_byte};
             end
             `TWO_BYTE:begin
-                indirect_data = {16'b0,indirect_half_word[BYTE_SIZE-1:0],indirect_half_word[2*BYTE_SIZE-1:BYTE_SIZE]};
+                indirect_data = {{16{indirect_half_word[BYTE_SIZE-1]}},indirect_half_word[BYTE_SIZE-1:0],indirect_half_word[2*BYTE_SIZE-1:BYTE_SIZE]};
             end
             `FOUR_BYTE:begin
                 indirect_data = {indirect_word[BYTE_SIZE-1:0],indirect_word[2*BYTE_SIZE-1:BYTE_SIZE],indirect_word[3*BYTE_SIZE-1:2*BYTE_SIZE],indirect_word[4*BYTE_SIZE-1:3*BYTE_SIZE]};
@@ -182,55 +199,68 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     end
     
     reg [2:0] requested_data_type;
-    reg [ADDR_WIDTH-1:0] load_addr;
-    reg [ADDR_WIDTH-1:0] _current_addr;
-    assign mem_vis_addr = {_current_addr[ADDR_WIDTH-1:BYTE_SELECT],{BYTE_SELECT{1'b0}}};
+    reg [ADDR_WIDTH-1:0] load_addr;     // 待加载部分
+    reg [ADDR_WIDTH-1:0] _current_addr; // 访存使用地址
     
-    wire load_addr_tag          = load_addr[ADDR_WIDTH-1:CACHE_INDEX_SIZE+BYTE_SELECT];
-    wire load_cache_line_index  = load_addr[CACHE_INDEX_SIZE+BYTE_SELECT-1:BYTE_SELECT];
-    wire load_select_bit        = load_addr[BYTE_SELECT-1:0];
-    wire extra_addr_tag         = _current_addr[ADDR_WIDTH-1:CACHE_INDEX_SIZE+BYTE_SELECT];
-    wire extra_cache_line_index = _current_addr[CACHE_INDEX_SIZE+BYTE_SELECT-1:BYTE_SELECT];
+    wire [TAG_SIZE-1:0] load_addr_tag                  = load_addr[ADDR_WIDTH-1:CACHE_INDEX_SIZE+BYTE_SELECT];
+    wire [CACHE_INDEX_SIZE-1:0] load_cache_line_index  = load_addr[CACHE_INDEX_SIZE+BYTE_SELECT-1:BYTE_SELECT];
+    wire [BYTE_SELECT-1:0] load_select_bit             = load_addr[BYTE_SELECT-1:0];
+    wire [TAG_SIZE-1:0] extra_addr_tag                 = _current_addr[ADDR_WIDTH-1:CACHE_INDEX_SIZE+BYTE_SELECT];
+    wire [CACHE_INDEX_SIZE-1:0] extra_cache_line_index = _current_addr[CACHE_INDEX_SIZE+BYTE_SELECT-1:BYTE_SELECT];
     
     
-    reg [1:0] CNT = 0;
+    reg [2:0] CNT = 0;
     reg [1:0] task_type;
     
     always @(posedge clk) begin
         case(CNT)
             // 等待开始工作
-            3:begin
-                d_cache_vis_status <= `D_CACHE_WORKING;
-                case (task_type)
-                    `D_CACHE_LOAD:begin
-                        CNT            <= 2;
-                        mem_vis_signal <= `MEM_READ; // 读取单个数据
-                    end
-                    `D_CACHE_STORE:begin
-                        CNT               <= 1;
-                        mem_vis_signal    <= `MEM_WRITE;
-                        mem_written_data  <= written_data;
-                        written_data_type <= requested_data_type;
-                    end
-                    default:
-                    $display("[ERROR]:unexpected task_type when cnt == 3 in data cache\n");
-                endcase
+            4:begin
+                if (mem_status == `MEM_RESTING) begin
+                    d_cache_vis_status <= `D_CACHE_WORKING;
+                    case (task_type)
+                        `D_CACHE_LOAD:begin
+                            CNT            <= 3;
+                            mem_vis_signal <= `MEM_READ; // 读取单个数据
+                            mem_vis_addr   <= {_current_addr[ADDR_WIDTH-1:BYTE_SELECT],{BYTE_SELECT{1'b0}}};
+                            _current_addr  <= _current_addr+CACHE_LINE_SIZE;
+                        end
+                        `D_CACHE_STORE:begin
+                            CNT               <= 1;
+                            mem_vis_signal    <= `MEM_WRITE;
+                            mem_vis_addr      <= _current_addr;
+                            mem_written_data  <= written_data;
+                            written_data_type <= requested_data_type;
+                        end
+                        default:
+                        $display("[ERROR]:unexpected task_type when cnt == 3 in data cache\n");
+                    endcase
+                end
+                else begin
+                    CNT                <= 4;
+                    d_cache_vis_status <= `D_CACHE_STALL;
+                end
             end
-            // 工作中，处理mem数据，再次发起访存
-            // load:一次要填充两个cache line，再从cache line中取数据
-            2:begin
+            // load等一周期
+            3:begin
                 if (mem_status == `MEM_DATA_FINISHED) begin
-                    CNT                              <= 1;
-                    mem_vis_signal                   <= `MEM_READ; // 读取单个数据
-                    _current_addr                    <= _current_addr+CACHE_LINE_SIZE;
+                    CNT                              <= 2;
+                    mem_vis_signal                   <= `MEM_NOP;
                     valid[load_cache_line_index]     <= 1;
                     tag[load_cache_line_index]       <= load_addr_tag;
                     data_line[load_cache_line_index] <= mem_data;
                 end
                 else begin
-                    CNT                <= 2;
+                    CNT                <= 3;
                     d_cache_vis_status <= `D_CACHE_STALL;
                 end
+            end
+            // 工作中，处理mem数据，再次发起访存
+            // load:一次要填充两个cache line，再从cache line中取数据
+            2:begin
+                CNT            <= 1;
+                mem_vis_signal <= `MEM_READ; // 读取单个数据
+                mem_vis_addr   <= {_current_addr[ADDR_WIDTH-1:BYTE_SELECT],{BYTE_SELECT{1'b0}}};
             end
             // 工作中，处理mem数据
             // load:填充两个cache line
@@ -267,9 +297,9 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                     requested_data_type <= data_type;
                     case (cache_vis_signal)
                         `D_CACHE_NOP:begin
-                            task_type          <= `D_CACHE_LOAD; // 形式记号，todo：D_CACHE_REST？
+                            task_type          <= `D_CACHE_REST;
                             CNT                <= 0;
-                            d_cache_vis_status <= `L_S_FINISHED;
+                            d_cache_vis_status <= `D_CACHE_RESTING;
                         end
                         // 都表现为
                         `D_CACHE_LOAD:begin
@@ -281,7 +311,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                             end
                             else begin
                                 task_type          <= `D_CACHE_LOAD;
-                                CNT                <= 3;
+                                CNT                <= 4;
                                 d_cache_vis_status <= `D_CACHE_WORKING;
                                 _current_addr      <= data_addr;
                                 load_addr          <= data_addr;
@@ -289,7 +319,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                         end
                         `D_CACHE_STORE:begin
                             task_type          <= `D_CACHE_STORE;
-                            CNT                <= 3;
+                            CNT                <= 4;
                             d_cache_vis_status <= `D_CACHE_WORKING;
                             _current_addr      <= data_addr;
                         end
