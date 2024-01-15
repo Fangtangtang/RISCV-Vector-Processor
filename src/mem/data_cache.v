@@ -22,10 +22,10 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                    parameter CACHE_INDEX_SIZE = 4)
                   (input wire clk,
                    input [ADDR_WIDTH-1:0] data_addr,
-                   input [2:0] data_type,                    // vsew
+                   input [2:0] data_type,                      // vsew
                    input [DATA_LEN-1:0] cache_written_data,
                    input [1:0] cache_vis_signal,
-                   input [ENTRY_INDEX_SIZE:0] length,        // 1：单个
+                   input [ENTRY_INDEX_SIZE:0] length,          // 1：单个
                    output cache_hit,
                    output reg [DATA_LEN-1:0] data,
                    output reg [1:0] d_cache_vis_status,
@@ -33,11 +33,11 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                    input [1:0] mem_status,
                    output reg [DATA_LEN-1:0] mem_written_data,
                    output reg [2:0] written_data_type,
-                   output [ENTRY_INDEX_SIZE:0] write_length, // 1：单个
-                   output [ADDR_WIDTH-1:0] mem_vis_addr,     // 访存地址
+                   output [ENTRY_INDEX_SIZE:0] write_length,   // 1：单个
+                   output [ADDR_WIDTH-1:0] mem_vis_addr,       // 访存地址
                    output reg [1:0] mem_vis_signal);
     
-    localparam BYTE_SELECT      = 2;
+    localparam BYTE_SELECT     = 2;
     localparam CACHE_LINE_SIZE = 1<<BYTE_SELECT;
     localparam TAG_SIZE        = ADDR_WIDTH - CACHE_INDEX_SIZE - BYTE_SELECT;
     
@@ -58,8 +58,8 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     // 全字
     wire word_hit = valid[cache_line_index]&&tag[cache_line_index] == addr_tag&&(select_bit+3<CACHE_LINE_SIZE|| tag[(cache_line_index+1)%CACHE_SIZE] == addr_tag);
     // 如果所要的数据都有，hit
-    // todo:EIGHT_BYTE
-    wire hit         = (data_type == `ONE_BYTE&&byte_hit)||(data_type == `TWO_BYTE&&half_word_hit)||(data_type == `FOUR_BYTE&&word_hit);
+    // EIGHT_BYTE被拆解为2个4byte
+    wire hit         = (data_type == `ONE_BYTE&&byte_hit)||(data_type == `TWO_BYTE&&half_word_hit)||(data_type == `FOUR_BYTE&&word_hit)||(data_type == `EIGHT_BYTE&&word_hit);
     assign cache_hit = hit;
     
     assign write_length = length;
@@ -107,10 +107,10 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     always @(*) begin
         case(data_type)
             `ONE_BYTE:begin
-                direct_data = {24'b0,direct_byte};
+                direct_data = {{24{direct_byte[BYTE_SIZE-1]}},direct_byte};
             end
             `TWO_BYTE:begin
-                direct_data = {16'b0,direct_half_word[BYTE_SIZE-1:0],direct_half_word[2*BYTE_SIZE-1:BYTE_SIZE]};
+                direct_data = {{16{direct_half_word[BYTE_SIZE-1]}},direct_half_word[BYTE_SIZE-1:0],direct_half_word[2*BYTE_SIZE-1:BYTE_SIZE]};
             end
             `FOUR_BYTE:begin
                 direct_data = {direct_word[BYTE_SIZE-1:0],direct_word[2*BYTE_SIZE-1:BYTE_SIZE],direct_word[3*BYTE_SIZE-1:2*BYTE_SIZE],direct_word[4*BYTE_SIZE-1:3*BYTE_SIZE]};
@@ -265,20 +265,22 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                 // data cache处于空闲状态，开启新任务
                 if (task_type == `D_CACHE_REST) begin
                     requested_data_type <= data_type;
-                    task_type           <= cache_vis_signal;
                     case (cache_vis_signal)
                         `D_CACHE_NOP:begin
+                            task_type          <= `D_CACHE_LOAD; // 形式记号，todo：D_CACHE_REST？
                             CNT                <= 0;
                             d_cache_vis_status <= `L_S_FINISHED;
                         end
                         // 都表现为
                         `D_CACHE_LOAD:begin
                             if (hit)begin
+                                task_type          <= `D_CACHE_LOAD; // 形式记号，todo：D_CACHE_REST？
                                 data               <= direct_data;
                                 CNT                <= 0;
                                 d_cache_vis_status <= `L_S_FINISHED;
                             end
                             else begin
+                                task_type          <= `D_CACHE_LOAD;
                                 CNT                <= 3;
                                 d_cache_vis_status <= `D_CACHE_WORKING;
                                 _current_addr      <= data_addr;
@@ -286,6 +288,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                             end
                         end
                         `D_CACHE_STORE:begin
+                            task_type          <= `D_CACHE_STORE;
                             CNT                <= 3;
                             d_cache_vis_status <= `D_CACHE_WORKING;
                             _current_addr      <= data_addr;

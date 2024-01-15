@@ -40,10 +40,10 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
     reg [DATA_LEN-1:0] read_data;
     assign mem_data = read_data;
     
-    wire [BYTE_SIZE-1:0] storage0Value = storage[0];
-    wire [BYTE_SIZE-1:0] storage1Value = storage[1];
-    wire [BYTE_SIZE-1:0] storage2Value = storage[2];
-    wire [BYTE_SIZE-1:0] storage3Value = storage[3];
+    wire [BYTE_SIZE-1:0] storage0Value = storage[131052];
+    wire [BYTE_SIZE-1:0] storage1Value = storage[131053];
+    wire [BYTE_SIZE-1:0] storage2Value = storage[131054];
+    wire [BYTE_SIZE-1:0] storage3Value = storage[131055];
     wire [BYTE_SIZE-1:0] storage4Value = storage[4096];
     wire [BYTE_SIZE-1:0] storage5Value = storage[4097];
     wire [BYTE_SIZE-1:0] storage6Value = storage[4098];

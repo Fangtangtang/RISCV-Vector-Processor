@@ -13,6 +13,7 @@
 // 
 // todo: mask的load，被mask部分用0替换？
 // todo: data cache hit?
+// todo: correct addr update??
 // #############################################################################################################################
 `include"src/defines.v"
 
@@ -59,6 +60,7 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
     reg [ENTRY_INDEX_SIZE:0]        current_length;
     reg [SCALAR_REG_LEN-1:0]        _written_scalar_data;
     reg [DATA_LEN*VECTOR_SIZE-1:0]  _written_vector_data;
+    assign mem_vis_addr = current_addr;
     
     wire [BYTE_SIZE-1:0] _written_vector_data_slices [0:DATA_LEN*VECTOR_SIZE/BYTE_SIZE-1];
     
@@ -105,6 +107,14 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
             3:begin
                 if (d_cache_status == `D_CACHE_RESTING)begin
                     mem_vis_status <= `MEM_CTR_WORKING;
+                    case (requested_data_type)
+                        `EIGHT_BYTE:current_addr <= current_addr+4;
+                        `FOUR_BYTE:current_addr  <= current_addr+4;
+                        `TWO_BYTE:current_addr   <= current_addr+2;
+                        `ONE_BYTE:current_addr   <= current_addr+4;
+                        default:
+                        $display("[ERROR]:unexpected data type when cnt == 3 in memory controller\n");
+                    endcase
                     case (task_type)
                         `MEM_CTR_LOAD:begin
                             if (visit_vector)begin
@@ -124,7 +134,12 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                                 end
                             end
                             else begin
-                                CNT              <= 2;
+                                if (requested_data_type == `EIGHT_BYTE)begin
+                                    CNT <= 2;
+                                end
+                                else begin
+                                    CNT <= 1;
+                                end
                                 cache_vis_signal <= `D_CACHE_LOAD;
                             end
                         end
@@ -147,9 +162,14 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                                 end
                             end
                             else begin
-                                CNT                <= 2;
-                                cache_vis_signal   <= `D_CACHE_STORE;
+                                if (requested_data_type == `EIGHT_BYTE)begin
+                                    CNT <= 2;
+                                end
+                                else begin
+                                    CNT <= 1;
+                                end
                                 cache_written_data <= _written_scalar_data[DATA_LEN-1:0]; // 64位数据后半部分
+                                cache_vis_signal   <= `D_CACHE_STORE;
                             end
                         end
                         default:
@@ -167,6 +187,7 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                 case (task_type)
                     `MEM_CTR_LOAD:begin
                         if (d_cache_status == `L_S_FINISHED)begin
+                            current_addr <= current_addr+4;
                             if (visit_vector) begin
                                 load_vector_data_slices[(current_length)<<4]   <= mem_data[7:0];
                                 load_vector_data_slices[(current_length)<<4+1] <= mem_data[15:8];
@@ -185,6 +206,7 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                     end
                     `MEM_CTR_STORE:begin
                         if (d_cache_status == `L_S_FINISHED)begin
+                            current_addr <= current_addr+4;
                             if (visit_vector) begin
                                 CNT                <= 1;
                                 cache_vis_signal   <= `D_CACHE_STORE;
@@ -211,22 +233,26 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                                 case(requested_data_type)
                                     `ONE_BYTE:begin
                                         load_vector_data_slices[current_length-1] <= mem_data[7:0];
+                                        current_addr                              <= current_addr+1;
                                     end
                                     `TWO_BYTE:begin
                                         load_vector_data_slices[(current_length-1)<<1]   <= mem_data[7:0];
                                         load_vector_data_slices[(current_length-1)<<1+1] <= mem_data[15:8];
+                                        current_addr                                     <= current_addr+2;
                                     end
                                     `FOUR_BYTE:begin
                                         load_vector_data_slices[(current_length-1)<<2]   <= mem_data[7:0];
                                         load_vector_data_slices[(current_length-1)<<2+1] <= mem_data[15:8];
                                         load_vector_data_slices[(current_length-1)<<2+2] <= mem_data[23:16];
                                         load_vector_data_slices[(current_length-1)<<2+3] <= mem_data[31:24];
+                                        current_addr                                     <= current_addr+4;
                                     end
                                     `EIGHT_BYTE:begin
                                         load_vector_data_slices[(current_length)<<4+4] <= mem_data[7:0];
                                         load_vector_data_slices[(current_length)<<4+5] <= mem_data[15:8];
                                         load_vector_data_slices[(current_length)<<4+6] <= mem_data[23:16];
                                         load_vector_data_slices[(current_length)<<4+7] <= mem_data[31:24];
+                                        current_addr                                   <= current_addr+4;
                                     end
                                     default:
                                     $display("[ERROR]:unexpected requested_data_type in mem ctr\n");
@@ -238,10 +264,15 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                                 end
                             end
                             else begin
-                                scalar_data[SCALAR_REG_LEN-1:DATA_LEN] <= mem_data;
-                                CNT                                    <= 0;
-                                mem_vis_status                         <= `MEM_CTR_FINISHED;
-                                cache_vis_signal                       <= `D_CACHE_NOP;
+                                if (requested_data_type == `EIGHT_BYTE)begin
+                                    scalar_data[SCALAR_REG_LEN-1:DATA_LEN] <= mem_data;
+                                end
+                                else begin
+                                    scalar_data <= {{32{mem_data[31]}},mem_data};
+                                end
+                                CNT              <= 0;
+                                mem_vis_status   <= `MEM_CTR_FINISHED;
+                                cache_vis_signal <= `D_CACHE_NOP;
                             end
                         end
                         if (d_cache_status == `D_CACHE_RESTING)begin
@@ -272,6 +303,14 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                         if (d_cache_status == `D_CACHE_RESTING)begin
                             if (visit_vector&&(current_length+1 < requested_length)) begin
                                 // 未结束
+                                case (requested_data_type)
+                                    `EIGHT_BYTE:current_addr <= current_addr+4;
+                                    `FOUR_BYTE:current_addr  <= current_addr+4;
+                                    `TWO_BYTE:current_addr   <= current_addr+2;
+                                    `ONE_BYTE:current_addr   <= current_addr+4;
+                                    default:
+                                    $display("[ERROR]:unexpected data type when cnt == 1 in memory controller\n");
+                                endcase
                                 cache_written_data <= written_data1;
                                 current_length     <= current_length+1;
                                 CNT                <= 1;
@@ -297,25 +336,27 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                 if (task_type == `MEM_CTR_REST) begin
                     if (mem_access_enabled) begin
                         visit_vector        <= is_vector;
-                        task_type           <= data_vis_signal;
+                        // task_type        <= data_vis_signal;
                         requested_data_type <= mem_data_type;
                         current_addr        <= data_addr;
                         if (data_vis_signal == `MEM_CTR_NOP) begin
+                            task_type      <= `MEM_CTR_LOAD; // 形式记号，todo：REST？
                             CNT            <= 0;
                             mem_vis_status <= `MEM_CTR_FINISHED;
                         end
                         else begin
+                            task_type      <= data_vis_signal;
                             CNT            <= 3;
                             mem_vis_status <= `MEM_CTR_WORKING;
                             if (is_vector) begin
                                 requested_length     <= length;
                                 _vm                  <= vm;
                                 _mask                <= mask;
-                                _written_scalar_data <= written_scalar_data;
                                 _written_vector_data <= written_vector_data;
                             end
                             else begin
-                                requested_length <= 1;
+                                _written_scalar_data <= written_scalar_data;
+                                requested_length     <= 1;
                             end
                         end
                     end
