@@ -8,7 +8,7 @@
 `include"src/defines.v"
 
 module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
-                    parameter LEN = 32,
+                    parameter DATA_LEN = 32,
                     parameter BYTE_SIZE = 8,
                     parameter VECTOR_SIZE = 8,
                     parameter ENTRY_INDEX_SIZE = 3)
@@ -18,9 +18,9 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
                     input [ADDR_WIDTH-1:0] i_cache_mem_vis_addr,
                     input [ADDR_WIDTH-1:0] d_cache_mem_vis_addr,
                     input [ENTRY_INDEX_SIZE:0] length,
-                    input [LEN-1:0] written_data,
+                    input [DATA_LEN-1:0] written_data,
                     input [2:0] data_type,
-                    output [LEN-1:0] mem_data,
+                    output [DATA_LEN-1:0] mem_data,
                     output reg [1:0] mem_status);
     
     reg [BYTE_SIZE-1:0] storage [0:2**ADDR_WIDTH-1];
@@ -37,7 +37,7 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
     assign mem_tast_type = !(d_cache_mem_vis_signal == `MEM_NOP)?d_cache_mem_vis_signal:i_cache_mem_vis_signal;
     wire read_data_flag  = i_cache_mem_vis_signal == `MEM_NOP;
     
-    reg [LEN-1:0] read_data;
+    reg [DATA_LEN-1:0] read_data;
     assign mem_data = read_data;
     
     wire [BYTE_SIZE-1:0] storage0Value = storage[0];

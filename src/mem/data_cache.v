@@ -2,6 +2,7 @@
 // DATA CACHE
 // 
 // 直接映射cache
+// cache line为4byte
 // 
 // 接受来自memory controller的访存请求
 // - 组合逻辑判断是否hit并反馈
@@ -13,7 +14,7 @@
 `include"src/defines.v"
 
 module DATA_CACHE#(parameter ADDR_WIDTH = 17,
-                   parameter LEN = 32,
+                   parameter DATA_LEN = 32,
                    parameter BYTE_SIZE = 8,
                    parameter VECTOR_SIZE = 8,
                    parameter ENTRY_INDEX_SIZE = 3,
@@ -22,32 +23,32 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                   (input wire clk,
                    input [ADDR_WIDTH-1:0] data_addr,
                    input [2:0] data_type,                    // vsew
-                   input [LEN-1:0] cache_written_data,
+                   input [DATA_LEN-1:0] cache_written_data,
                    input [1:0] cache_vis_signal,
                    input [ENTRY_INDEX_SIZE:0] length,        // 1：单个
                    output cache_hit,
-                   output reg [LEN-1:0] data,
+                   output reg [DATA_LEN-1:0] data,
                    output reg [1:0] d_cache_vis_status,
-                   input [LEN-1:0] mem_data,
+                   input [DATA_LEN-1:0] mem_data,
                    input [1:0] mem_status,
-                   output reg [LEN-1:0] mem_written_data,
+                   output reg [DATA_LEN-1:0] mem_written_data,
                    output reg [2:0] written_data_type,
                    output [ENTRY_INDEX_SIZE:0] write_length, // 1：单个
                    output [ADDR_WIDTH-1:0] mem_vis_addr,     // 访存地址
                    output reg [1:0] mem_vis_signal);
     
-    localparam BIT_SELECT      = 2;
-    localparam CACHE_LINE_SIZE = 1<<BIT_SELECT;
-    localparam TAG_SIZE        = ADDR_WIDTH - CACHE_INDEX_SIZE - BIT_SELECT;
+    localparam BYTE_SELECT      = 2;
+    localparam CACHE_LINE_SIZE = 1<<BYTE_SELECT;
+    localparam TAG_SIZE        = ADDR_WIDTH - CACHE_INDEX_SIZE - BYTE_SELECT;
     
     // 缓存数据
     reg valid [CACHE_SIZE-1:0];
     reg [TAG_SIZE-1:0] tag [CACHE_SIZE-1:0];
-    reg [LEN-1:0] data_line [CACHE_SIZE-1:0]; // 一个cache line
+    reg [DATA_LEN-1:0] data_line [CACHE_SIZE-1:0]; // 一个cache line
     
-    wire addr_tag         = data_addr[ADDR_WIDTH-1:CACHE_INDEX_SIZE+BIT_SELECT];
-    wire cache_line_index = data_addr[CACHE_INDEX_SIZE+BIT_SELECT-1:BIT_SELECT];
-    wire select_bit       = data_addr[BIT_SELECT-1:0];
+    wire addr_tag         = data_addr[ADDR_WIDTH-1:CACHE_INDEX_SIZE+BYTE_SELECT];
+    wire cache_line_index = data_addr[CACHE_INDEX_SIZE+BYTE_SELECT-1:BYTE_SELECT];
+    wire select_bit       = data_addr[BYTE_SELECT-1:0];
     
     // + hit判断
     // 单字节
@@ -64,17 +65,17 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     assign write_length = length;
     
     // 接线取数据（从请求地址开始取字节，转为正常顺序）
-    reg [LEN-1:0]              direct_data;
+    reg [DATA_LEN-1:0]          direct_data;
     
     reg [BYTE_SIZE-1:0]         direct_byte ;
     reg [2*BYTE_SIZE-1:0]       direct_half_word;
-    reg [LEN-1:0]               direct_word;
+    reg [DATA_LEN-1:0]          direct_word;
     
-    reg [LEN-1:0]              indirect_data;
+    reg [DATA_LEN-1:0]          indirect_data;
     
     reg [BYTE_SIZE-1:0]         indirect_byte ;
     reg [2*BYTE_SIZE-1:0]       indirect_half_word;
-    reg [LEN-1:0]               indirect_word;
+    reg [DATA_LEN-1:0]          indirect_word;
     
     always @(*) begin
         case (select_bit)
@@ -163,7 +164,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     end
     
     // 转为内存顺序的数据
-    reg [LEN-1:0] written_data;
+    reg [DATA_LEN-1:0] written_data;
     always @(*) begin
         case(requested_data_type)
             `ONE_BYTE:begin
@@ -183,13 +184,13 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     reg [2:0] requested_data_type;
     reg [ADDR_WIDTH-1:0] load_addr;
     reg [ADDR_WIDTH-1:0] _current_addr;
-    assign mem_vis_addr = {_current_addr[ADDR_WIDTH-1:BIT_SELECT],{BIT_SELECT{1'b0}}};
+    assign mem_vis_addr = {_current_addr[ADDR_WIDTH-1:BYTE_SELECT],{BYTE_SELECT{1'b0}}};
     
-    wire load_addr_tag          = load_addr[ADDR_WIDTH-1:CACHE_INDEX_SIZE+BIT_SELECT];
-    wire load_cache_line_index  = load_addr[CACHE_INDEX_SIZE+BIT_SELECT-1:BIT_SELECT];
-    wire load_select_bit        = load_addr[BIT_SELECT-1:0];
-    wire extra_addr_tag         = _current_addr[ADDR_WIDTH-1:CACHE_INDEX_SIZE+BIT_SELECT];
-    wire extra_cache_line_index = _current_addr[CACHE_INDEX_SIZE+BIT_SELECT-1:BIT_SELECT];
+    wire load_addr_tag          = load_addr[ADDR_WIDTH-1:CACHE_INDEX_SIZE+BYTE_SELECT];
+    wire load_cache_line_index  = load_addr[CACHE_INDEX_SIZE+BYTE_SELECT-1:BYTE_SELECT];
+    wire load_select_bit        = load_addr[BYTE_SELECT-1:0];
+    wire extra_addr_tag         = _current_addr[ADDR_WIDTH-1:CACHE_INDEX_SIZE+BYTE_SELECT];
+    wire extra_cache_line_index = _current_addr[CACHE_INDEX_SIZE+BYTE_SELECT-1:BYTE_SELECT];
     
     
     reg [1:0] CNT = 0;

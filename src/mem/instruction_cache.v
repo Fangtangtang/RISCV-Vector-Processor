@@ -9,27 +9,27 @@
 `include"src/defines.v"
 
 module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
-                          parameter LEN = 32,
+                          parameter DATA_LEN = 32,
                           parameter BYTE_SIZE = 8,
                           parameter I_CACHE_SIZE = 2,
                           parameter I_CACHE_INDEX_SIZE = 1)
                          (input wire clk,
                           input [ADDR_WIDTH-1:0] inst_addr,     // instruction fetch
                           input inst_fetch_enabled,
-                          output [LEN-1:0] instruction,
+                          output [DATA_LEN-1:0] instruction,
                           output reg [1:0] inst_fetch_status,
-                          input [LEN-1:0] mem_data,             // interact with main memory
+                          input [DATA_LEN-1:0] mem_data,             // interact with main memory
                           input [1:0] mem_status,
                           output [ADDR_WIDTH-1:0] mem_vis_addr, // 访存地址
                           output reg [1:0] mem_vis_signal);
     
     // reordered data
-    wire [LEN-1:0] reorder_mem_data = {mem_data[7:0],mem_data[15:8],mem_data[23:16],mem_data[31:24]};
+    wire [DATA_LEN-1:0] reorder_mem_data = {mem_data[7:0],mem_data[15:8],mem_data[23:16],mem_data[31:24]};
     
     // 全关联cache
     reg valid [I_CACHE_SIZE-1:0];
     reg [ADDR_WIDTH-1:0] inst_address [I_CACHE_SIZE-1:0];
-    reg [LEN-1:0] inst [I_CACHE_SIZE-1:0];
+    reg [DATA_LEN-1:0] inst [I_CACHE_SIZE-1:0];
     
     wire [31:0] inst1Value           = inst[0];
     wire [31:0] inst2Value           = inst[1];
@@ -38,7 +38,7 @@ module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
     
     reg [1:0] CNT = 0;
     
-    reg [LEN-1:0] _instruction;
+    reg [DATA_LEN-1:0] _instruction;
     assign instruction = _instruction;
     
     reg _hit;
