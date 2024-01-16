@@ -40,7 +40,7 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
                              input [VECTOR_SIZE*DATA_LEN - 1:0] mask,
                              input [SCALAR_REG_LEN - 1:0] imm,           // 立即数
                              input [SCALAR_REG_LEN - 1:0] rs,            // 标量操作数
-                             input [2:0] alu_signal,
+                             input [3:0] alu_signal,
                              input [1:0] vec_operand_type,
                              input [4:0] ext_type,
                              input [5:0] funct6,
@@ -59,7 +59,7 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     reg [VECTOR_SIZE*DATA_LEN - 1:0] mask_;
     reg [SCALAR_REG_LEN - 1:0] imm_;
     reg [SCALAR_REG_LEN - 1:0] rs_;
-    reg [2:0] task_type;
+    reg [3:0] task_type;
     reg [1:0] operand_type;
     reg [5:0] alu_opcode;
     reg is_mask_operation;

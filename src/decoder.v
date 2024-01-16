@@ -22,7 +22,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                 output wire [3:0] output_func_code,                // 包含funct3
                 output wire [5:0] output_func6,                    // 在vector指令中可能被拆解
                 output wire [SCALAR_REG_LEN-1:0] output_immediate,
-                output wire [2:0] output_exe_signal,
+                output wire [3:0] output_exe_signal,
                 output wire [1:0] output_vec_operand_type,
                 output wire [1:0] output_mem_vis_signal,
                 output wire [1:0] output_data_size,
@@ -61,8 +61,8 @@ module DECODER#(parameter ADDR_WIDTH = 17,
     wire special_func_code = func_code == 4'b0001||func_code == 4'b0101||func_code == 4'b1101;
     
     assign V_type = opcode == `VL||opcode == `VS||opcode == `VARITH;
-    assign R_type = (opcode == 7'b0110011)||(opcode == 7'b0010011&&special_func_code);
-    assign I_type = (opcode == 7'b0010011&&(!special_func_code))||(opcode == 7'b0000011)||(opcode == 7'b1100111&&func_code[2:0] == 3'b000);
+    assign R_type = (opcode == 7'b0110011)||(opcode == 7'b0010011&&special_func_code)||opcode == 7'b0111011;
+    assign I_type = (opcode == 7'b0010011&&(!special_func_code))||(opcode == 7'b0000011)||((opcode == 7'b1100111||opcode == 7'b0011011)&&func_code[2:0] == 3'b000);
     assign S_type = opcode == 7'b0100011;
     assign B_type = opcode == 7'b1100011;
     assign U_type = opcode == 7'b0110111||opcode == 7'b0010111;
@@ -83,7 +83,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
     wire signed [SCALAR_REG_LEN-1:0] J_imm = {{44{sign_bit}}, instruction[31], instruction[19:12], instruction[20], instruction[30:21],1'b0};
     
     reg [SCALAR_REG_LEN-1:0]    immediate;
-    reg [2:0]                   exe_signal;
+    reg [3:0]                   exe_signal;
     reg [1:0]                   vec_operand_type;
     reg [1:0]                   mem_vis_signal;
     reg [1:0]                   data_size;
@@ -233,6 +233,14 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                         branch_signal  = `NOT_BRANCH;
                         wb_signal      = `ARITH;
                     end
+                    // addw
+                    7'b0111011:begin
+                        exe_signal     = `BINARY_WORD;
+                        mem_vis_signal = `MEM_CTR_NOP;
+                        data_size      = `NOT_ACCESS;
+                        branch_signal  = `NOT_BRANCH;
+                        wb_signal      = `ARITH;
+                    end
                     default:
                     $display("[ERROR]:unexpected R type instruction\n");
                 endcase
@@ -244,6 +252,14 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                 case (opcode)
                     7'b0010011: begin
                         exe_signal     = `IMM_BINARY;
+                        mem_vis_signal = `MEM_CTR_NOP;
+                        data_size      = `NOT_ACCESS;
+                        branch_signal  = `NOT_BRANCH;
+                        wb_signal      = `ARITH;
+                    end
+                    //addiw
+                    7'b0011011:begin
+                        exe_signal     = `IMM_BINARY_WORD;
                         mem_vis_signal = `MEM_CTR_NOP;
                         data_size      = `NOT_ACCESS;
                         branch_signal  = `NOT_BRANCH;

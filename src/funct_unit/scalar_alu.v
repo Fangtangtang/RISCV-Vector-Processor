@@ -15,11 +15,13 @@ module SCALAR_ALU#(parameter ADDR_WIDTH = 17,
                    input [SCALAR_REG_LEN - 1:0] rs2,
                    input [SCALAR_REG_LEN - 1:0] imm,
                    input [DATA_LEN - 1:0] pc,
-                   input [2:0] alu_signal,
+                   input [3:0] alu_signal,
                    input [3:0] func_code,
                    output reg [SCALAR_REG_LEN - 1:0] result,
                    output reg [1:0] sign_bits);
     
+    wire [31:0] binary_sum     = rs1+rs2;
+    wire [31:0] imm_binary_sum = rs1+imm;
     always @(*) begin
         case (alu_signal)
             `ALU_NOP:begin
@@ -31,12 +33,26 @@ module SCALAR_ALU#(parameter ADDR_WIDTH = 17,
                     $display("[ERROR]:unexpected binary instruction\n");
                 endcase
             end
+            `BINARY_WORD:begin
+                case (func_code)
+                    `ADD:result = {{32{binary_sum[31]}},binary_sum};
+                    default:
+                    $display("[ERROR]:unexpected binary word instruction\n");
+                endcase
+            end
             `IMM_BINARY:begin
                 case (func_code[2:0])
                     `ADDI:result = rs1 + imm;
                     `SLTI:result = rs1 < imm ? 1 : 0;
                     default:
                     $display("[ERROR]:unexpected immediate binary instruction\n");
+                endcase
+            end
+            `IMM_BINARY_WORD:begin
+                case (func_code[2:0])
+                    `ADDI:result = {{32{imm_binary_sum[31]}},imm_binary_sum};
+                    default:
+                    $display("[ERROR]:unexpected immediate binary word instruction\n");
                 endcase
             end
             `BRANCH_COND:begin

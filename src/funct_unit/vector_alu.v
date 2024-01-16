@@ -29,7 +29,7 @@ module VECTOR_ALU#(parameter ADDR_WIDTH = 17,
                    input mask,
                    input [SCALAR_REG_LEN - 1:0] imm,       // 立即数，符号位拓展
                    input [SCALAR_REG_LEN - 1:0] rs,        // 标量操作数，符号位拓展
-                   input [2:0] alu_signal,
+                   input [3:0] alu_signal,
                    input [1:0] vec_operand_type,
                    input is_mask_operation,
                    input [5:0] opcode,

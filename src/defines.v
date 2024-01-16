@@ -101,15 +101,19 @@
 // ALU
 // ----------------------------------------------------------
 // 计算控制信号
-`define     ALU_NOP                 3'b000
-`define     BINARY                  3'b001
-`define     IMM_BINARY              3'b010
-`define     BRANCH_COND             3'b011
-`define     MEM_ADDR                3'b100
-`define     PC_BASED                3'b101
-`define     IMM                     3'b110
+`define     ALU_NOP                 4'b0000
+`define     BINARY                  4'b0001
+`define     IMM_BINARY              4'b0010
+`define     BRANCH_COND             4'b0011
+`define     MEM_ADDR                4'b0100
+`define     PC_BASED                4'b0101
+`define     IMM                     4'b0110
 
-`define     SET_CFG                 3'b111
+`define     SET_CFG                 4'b0111
+
+`define     BINARY_WORD             4'b1000
+`define     IMM_BINARY_WORD         4'b1001
+
 
 // vector运算类型
 `define     NOT_VEC_ARITH           2'b00

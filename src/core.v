@@ -101,7 +101,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     reg [5:0]                       ID_EXE_FUNCT6;
     
     reg                             ID_EXE_IS_VEC_INST;
-    reg [2:0]                       ID_EXE_ALU_SIGNAL;        // ALU信号
+    reg [3:0]                       ID_EXE_ALU_SIGNAL;        // ALU信号
     reg [1:0]                       ID_EXE_MEM_VIS_SIGNAL;    // 访存信号
     reg [1:0]                       ID_EXE_MEM_VIS_DATA_SIZE; // todo:scalar?
     reg [1:0]                       ID_EXE_BRANCH_SIGNAL;
@@ -206,7 +206,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     wire [3:0]     	            decoder_output_func_code;
     wire [5:0]     	            decoder_output_func6;
     wire [SCALAR_REG_LEN-1:0] 	decoder_output_immediate;
-    wire [2:0]     	            decoder_output_exe_signal;
+    wire [3:0]     	            decoder_output_exe_signal;
     wire [1:0]     	            decoder_output_vec_operand_type;
     wire [1:0]     	            decoder_output_mem_vis_signal;
     wire [1:0]     	            decoder_output_data_size;
