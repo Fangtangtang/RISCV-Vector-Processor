@@ -114,6 +114,8 @@
 `define     BINARY_WORD             4'b1000
 `define     IMM_BINARY_WORD         4'b1001
 
+`define     READ_CSR                4'b1010
+
 
 // vector运算类型
 `define     NOT_VEC_ARITH           2'b00
@@ -132,6 +134,9 @@
 // IMM
 `define     ADDI                    3'b000
 `define     SLTI                    3'b010
+
+// CSR读写
+`define     CSRRS                   3'b010
 
 // VECTOR
 `define     VECTOR_ADD                   6'b000000
@@ -158,13 +163,14 @@
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Type Code
 // ----------------------------------------------------------
-`define     V_TYPE                  7'b1000000
-`define     R_TYPE                  7'b0100000
-`define     I_TYPE                  7'b0010000
-`define     S_TYPE                  7'b0001000
-`define     B_TYPE                  7'b0000100
-`define     U_TYPE                  7'b0000010
-`define     J_TYPE                  7'b0000001
+`define     P_TYPE                  8'b10000000
+`define     V_TYPE                  8'b01000000
+`define     R_TYPE                  8'b00100000
+`define     I_TYPE                  8'b00010000
+`define     S_TYPE                  8'b00001000
+`define     B_TYPE                  8'b00000100
+`define     U_TYPE                  8'b00000010
+`define     J_TYPE                  8'b00000001
 
 // Vector Opcode
 `define     VL                      7'b0000111
@@ -194,10 +200,11 @@
 
 // WB 写寄存器
 // ----------------------------------------------------------
-`define     WB_NOP                  2'b00
-`define     MEM_TO_REG              2'b01
-`define     ARITH                   2'b10
-`define     INCREASED_PC            2'b11
+`define     WB_NOP                  3'b000
+`define     MEM_TO_REG              3'b001
+`define     ARITH                   3'b010
+`define     INCREASED_PC            3'b011
+`define     CSR_TO_REG              3'b011
 
 // ENCODING
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -263,3 +270,7 @@
 `define     SEXT4                  5'b00101
 `define     ZEXT8                  5'b00010
 `define     SEXT8                  5'b00011
+
+// CSR Read/Write Encoding
+// ----------------------------------------------------------
+`define     VLENB                  12'b110000100010

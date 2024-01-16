@@ -17,6 +17,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                 output wire [4:0] reg1_index,
                 output wire [4:0] reg2_index,
                 output wire [4:0] reg3_index,
+                output wire [11:0] csr_encoding,
                 output wire vm,
                 output wire [10:0] zimm,                           // 在vector指令中可能被拆解
                 output wire [3:0] output_func_code,                // 包含funct3
@@ -28,12 +29,13 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                 output wire [1:0] output_data_size,
                 output wire [1:0] output_vector_l_s_type,
                 output wire [1:0] output_branch_signal,
-                output wire [1:0] output_wb_signal);
+                output wire [2:0] output_wb_signal);
     
     // 使用的向量或标量寄存器下标
-    assign reg1_index = instruction[19:15];
-    assign reg2_index = instruction[24:20];
-    assign reg3_index = instruction[11:7];
+    assign reg1_index   = instruction[19:15];
+    assign reg2_index   = instruction[24:20];
+    assign reg3_index   = instruction[11:7];
+    assign csr_encoding = instruction[31:20];
     
     wire [6:0]      opcode;
     wire [2:0]      func3;
@@ -50,6 +52,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
     assign output_func_code = {instruction[30],instruction[14:12]};
     
     assign is_vector_instruction = opcode == `VL||opcode == `VS||opcode == `VARITH;
+    wire            P_type; // privilege instruction
     wire            V_type; // vector instruction
     wire            R_type; // binary and part of imm binary
     wire            I_type; // jalr,load and part of imm binary
@@ -60,6 +63,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
     
     wire special_func_code = func_code == 4'b0001||func_code == 4'b0101||func_code == 4'b1101;
     
+    assign P_type = opcode == 7'b1110011;
     assign V_type = opcode == `VL||opcode == `VS||opcode == `VARITH;
     assign R_type = (opcode == 7'b0110011)||(opcode == 7'b0010011&&special_func_code)||opcode == 7'b0111011;
     assign I_type = (opcode == 7'b0010011&&(!special_func_code))||(opcode == 7'b0000011)||((opcode == 7'b1100111||opcode == 7'b0011011)&&func_code[2:0] == 3'b000);
@@ -72,6 +76,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
     wire sign_bit;
     assign sign_bit = instruction[31];
     
+    wire signed [SCALAR_REG_LEN-1:0] P_imm = {{59{1'b0}},instruction[19:15]};
     wire signed [SCALAR_REG_LEN-1:0] V_imm = {{59{instruction[19]}},instruction[19:15]};
     wire signed [SCALAR_REG_LEN-1:0] R_imm = 0;
     wire signed [SCALAR_REG_LEN-1:0] I_imm = {{52{sign_bit}}, instruction[31:20]};
@@ -89,7 +94,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
     reg [1:0]                   data_size;
     reg [1:0]                   vector_l_s_type;
     reg [1:0]                   branch_signal;
-    reg [1:0]                   wb_signal;
+    reg [2:0]                   wb_signal;
     
     assign output_immediate        = immediate;
     assign output_exe_signal       = exe_signal;
@@ -101,7 +106,23 @@ module DECODER#(parameter ADDR_WIDTH = 17,
     assign output_wb_signal        = wb_signal;
     
     always @(*) begin
-        case ({V_type,R_type,I_type,S_type,B_type,U_type,J_type})
+        case ({P_type,V_type,R_type,I_type,S_type,B_type,U_type,J_type})
+            `P_TYPE:begin
+                immediate        = P_imm;
+                vec_operand_type = `NOT_VEC_ARITH;
+                vector_l_s_type  = `NOT_ACCESS;
+                case (func3)
+                    `CSRRS:begin
+                        exe_signal     = `READ_CSR;
+                        mem_vis_signal = `MEM_CTR_NOP;
+                        data_size      = `NOT_ACCESS;
+                        branch_signal  = `NOT_BRANCH;
+                        wb_signal      = `CSR_TO_REG;
+                    end
+                    default:
+                    $display("[ERROR]:unexpected data width in privilege instruction\n");
+                endcase
+            end
             `V_TYPE:begin
                 immediate = V_imm;
                 case (opcode)
@@ -257,7 +278,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                         branch_signal  = `NOT_BRANCH;
                         wb_signal      = `ARITH;
                     end
-                    //addiw
+                    // addiw
                     7'b0011011:begin
                         exe_signal     = `IMM_BINARY_WORD;
                         mem_vis_signal = `MEM_CTR_NOP;

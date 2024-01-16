@@ -1,3 +1,4 @@
+// add immediate word
 int main()
 {
     int a = 1;

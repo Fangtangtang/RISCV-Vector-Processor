@@ -80,6 +80,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     // id-exe
     reg [DATA_LEN-1:0]               ID_EXE_PC;
     
+    reg [SCALAR_REG_LEN-1:0]         ID_EXE_CSR;
     reg [SCALAR_REG_LEN-1:0]         ID_EXE_RS1;              // 从register file读取到的rs1数据
     reg [SCALAR_REG_LEN-1:0]         ID_EXE_RS2;              // 从register file读取到的rs2数据
     reg [VECTOR_SIZE*DATA_LEN - 1:0] ID_EXE_MASK;
@@ -105,11 +106,12 @@ module CORE#(parameter ADDR_WIDTH = 17,
     reg [1:0]                       ID_EXE_MEM_VIS_SIGNAL;    // 访存信号
     reg [1:0]                       ID_EXE_MEM_VIS_DATA_SIZE; // todo:scalar?
     reg [1:0]                       ID_EXE_BRANCH_SIGNAL;
-    reg [1:0]                       ID_EXE_WB_SIGNAL;
+    reg [2:0]                       ID_EXE_WB_SIGNAL;
     
     // exe-mem
     reg [DATA_LEN-1:0]               EXE_MEM_PC;
     
+    reg [SCALAR_REG_LEN-1:0]         EXE_MEN_CSR;
     reg [SCALAR_REG_LEN-1:0]         EXE_MEM_SCALAR_RESULT;       // scalar计算结果
     reg [VECTOR_SIZE*DATA_LEN - 1:0] EXE_MEM_VECTOR_RESULT;       // vector计算结果
     reg [VECTOR_SIZE*DATA_LEN - 1:0] EXE_MEM_MASK;
@@ -132,7 +134,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     reg [1:0]                   EXE_MEM_MEM_VIS_SIGNAL;
     reg [1:0]                   EXE_MEM_MEM_VIS_DATA_SIZE;
     reg [1:0]                   EXE_MEM_BRANCH_SIGNAL;
-    reg [1:0]                   EXE_MEM_WB_SIGNAL;
+    reg [2:0]                   EXE_MEM_WB_SIGNAL;
     
     // mem-wb
     reg [DATA_LEN-1:0]          MEM_WB_PC;
@@ -140,6 +142,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     reg [SCALAR_REG_LEN-1:0]         MEM_WB_MEM_SCALAR_DATA;     // 从内存读取的scalar数据
     reg [VECTOR_SIZE*DATA_LEN - 1:0] MEM_WB_MEM_VECTOR_DATA;     // 从内存读取的vector数据
     reg [VECTOR_SIZE*DATA_LEN - 1:0] MEM_WB_MASK;
+    reg [SCALAR_REG_LEN-1:0]         MEM_WB_CSR;
     reg [SCALAR_REG_LEN-1:0]         MEM_WB_SCALAR_RESULT;       // scalar计算结果
     reg [VECTOR_SIZE*DATA_LEN - 1:0] MEM_WB_VECTOR_RESULT;       // vector计算结果
     
@@ -153,7 +156,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     
     reg                         MEM_WB_IS_VEC_INST;
     reg                         MEM_WB_OP_ON_MASK;            // 是对mask的操作
-    reg [1:0]                   MEM_WB_WB_SIGNAL;
+    reg [2:0]                   MEM_WB_WB_SIGNAL;
     
     // MEM VISIT
     // ---------------------------------------------------------------------------------------------
@@ -201,6 +204,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     wire [4:0]     	            decoder_reg1_index;
     wire [4:0]     	            decoder_reg2_index;
     wire [4:0]     	            decoder_reg3_index;
+    wire[11:0]                  decoder_csr_encoding;
     wire           	            decoder_vm;
     wire [10:0]    	            decoder_zimm;
     wire [3:0]     	            decoder_output_func_code;
@@ -212,7 +216,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     wire [1:0]     	            decoder_output_data_size;
     wire [1:0]     	            decoder_output_vector_l_s_type;
     wire [1:0]     	            decoder_output_branch_signal;
-    wire [1:0]     	            decoder_output_wb_signal;
+    wire [2:0]     	            decoder_output_wb_signal;
     
     DECODER #(
     .ADDR_WIDTH       	(ADDR_WIDTH),
@@ -229,6 +233,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     .reg1_index              	(decoder_reg1_index),
     .reg2_index              	(decoder_reg2_index),
     .reg3_index              	(decoder_reg3_index),
+    .csr_encoding               (decoder_csr_encoding),
     .vm                      	(decoder_vm),
     .zimm                    	(decoder_zimm), // todo:zimm in vector instruction
     .output_func_code        	(decoder_output_func_code),
@@ -440,12 +445,17 @@ module CORE#(parameter ADDR_WIDTH = 17,
     // STAGE2 : INSTRUCTION DECODE
     // - decoder解码
     // - 访问register file取值
+    // - read CSR
     // ---------------------------------------------------------------------------------------------
     
     always @(posedge clk) begin
         if ((!rst)&&rdy_in&&start_cpu) begin
             if (ID_STATE_CTR) begin
                 ID_EXE_PC <= IF_ID_PC;
+                
+                case (decoder_csr_encoding)
+                    `VLENB:ID_EXE_CSR <= VLENB;
+                endcase
                 
                 ID_EXE_RS1  <= scalar_rf_rs1_data;
                 ID_EXE_RS2  <= scalar_rf_rs2_data;
@@ -490,6 +500,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
             if (EXE_STATE_CTR && !ID_EXE_IS_VEC_INST) begin
                 EXE_MEM_PC <= ID_EXE_PC;
                 
+                EXE_MEN_CSR           <= ID_EXE_CSR;
                 EXE_MEM_SCALAR_RESULT <= scalar_alu_result;
                 EXE_MEM_ZERO_BITS     <= scalar_alu_sign_bits;
                 EXE_MEM_RS2           <= ID_EXE_RS2;
@@ -644,6 +655,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
                     else begin
                         // 标量load/store
                         mem_working_on_vector <= `FALSE;
+                        MEM_WB_CSR            <= EXE_MEN_CSR;
                         MEM_WB_SCALAR_RESULT  <= EXE_MEM_SCALAR_RESULT;
                     end
                 end
@@ -684,6 +696,10 @@ module CORE#(parameter ADDR_WIDTH = 17,
             end
             `INCREASED_PC:begin
                 scalar_rf_reg_write_data = 4 + MEM_WB_PC;
+                scalar_rb_flag           = 1;
+            end
+            `CSR_TO_REG:begin
+                scalar_rf_reg_write_data = MEM_WB_CSR;
                 scalar_rb_flag           = 1;
             end
             `WB_NOP:begin
