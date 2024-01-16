@@ -1,0 +1,110 @@
+
+/mnt/f/repo/RISCV-Vector-Processor/testspace/test.om:     file format elf64-littleriscv
+
+
+Disassembly of section .rom:
+
+0000000000000000 <.rom>:
+   0:	00020137          	lui	sp,0x20
+   4:	7fd000ef          	jal	ra,1000 <main>
+   8:	0ff00513          	li	a0,255          # rd:01010  10
+   c:	000306b7          	lui	a3,0x30
+  10:	00a68223          	sb	a0,4(a3) # 30004 <__heap_start+0x2e004>
+  14:	ff9ff06f          	j	c <main-0xff4>
+
+Disassembly of section .text:
+
+0000000000001000 <main>:
+    1000:	fe010113          	addi	sp,sp,-32 # 1ffe0 <__heap_start+0x1dfe0> r2
+    1004:	00813c23          	sd	s0,24(sp)   # M[x[rs1(2)] + sext(offset) ]= x[rs2(8)][63: 0]
+    1008:	02010413          	addi	s0,sp,32
+    100c:	00100793          	li	a5,1        # x[r15] = 1
+    1010:	fef42623          	sw	a5,-20(s0)  
+    1014:	fec42783          	lw	a5,-20(s0)  # x[r15] = 1
+    1018:	0017879b          	addiw	a5,a5,1
+    101c:	fef42623          	sw	a5,-20(s0)
+    1020:	fec42783          	lw	a5,-20(s0)  
+    1024:	00078513          	mv	a0,a5
+    1028:	01813403          	ld	s0,24(sp)
+    102c:	02010113          	addi	sp,sp,32
+    1030:	00008067          	ret
+
+Disassembly of section .riscv.attributes:
+
+0000000000000000 <.riscv.attributes>:
+   0:	8541                	vmsge.vx	v10,v0,ra,v0.t
+   2:	0000                	vmsge.vx	v0,v0,zero,v0.t
+   4:	7200                	vmsge.vx	v4,v0,zero,v0.t
+   6:	7369                	.2byte	0x7369
+   8:	01007663          	bgeu	zero,a6,14 <main-0xfec>
+   c:	0000007b          	.4byte	0x7b
+  10:	1004                	.2byte	0x1004
+  12:	7205                	.2byte	0x7205
+  14:	3676                	.2byte	0x3676
+  16:	6934                	.2byte	0x6934
+  18:	7032                	.2byte	0x7032
+  1a:	5f30                	.2byte	0x5f30
+  1c:	326d                	.2byte	0x326d
+  1e:	3070                	.2byte	0x3070
+  20:	615f 7032 5f30      	.byte	0x5f, 0x61, 0x32, 0x70, 0x30, 0x5f
+  26:	3266                	.2byte	0x3266
+  28:	3070                	.2byte	0x3070
+  2a:	645f 7032 5f30      	.byte	0x5f, 0x64, 0x32, 0x70, 0x30, 0x5f
+  30:	3176                	.2byte	0x3176
+  32:	3070                	.2byte	0x3070
+  34:	7a5f 6576 3233      	.byte	0x5f, 0x7a, 0x76, 0x65, 0x33, 0x32
+  3a:	3166                	.2byte	0x3166
+  3c:	3070                	.2byte	0x3070
+  3e:	7a5f 6576 3233      	.byte	0x5f, 0x7a, 0x76, 0x65, 0x33, 0x32
+  44:	3178                	.2byte	0x3178
+  46:	3070                	.2byte	0x3070
+  48:	7a5f 6576 3436      	.byte	0x5f, 0x7a, 0x76, 0x65, 0x36, 0x34
+  4e:	3164                	.2byte	0x3164
+  50:	3070                	.2byte	0x3070
+  52:	7a5f 6576 3436      	.byte	0x5f, 0x7a, 0x76, 0x65, 0x36, 0x34
+  58:	3166                	.2byte	0x3166
+  5a:	3070                	.2byte	0x3070
+  5c:	7a5f 6576 3436      	.byte	0x5f, 0x7a, 0x76, 0x65, 0x36, 0x34
+  62:	3178                	.2byte	0x3178
+  64:	3070                	.2byte	0x3070
+  66:	7a5f 6c76 3231      	.byte	0x5f, 0x7a, 0x76, 0x6c, 0x31, 0x32
+  6c:	6238                	.2byte	0x6238
+  6e:	7031                	.2byte	0x7031
+  70:	5f30                	.2byte	0x5f30
+  72:	767a                	.2byte	0x767a
+  74:	336c                	.2byte	0x336c
+  76:	6232                	.2byte	0x6232
+  78:	7031                	.2byte	0x7031
+  7a:	5f30                	.2byte	0x5f30
+  7c:	767a                	.2byte	0x767a
+  7e:	366c                	.2byte	0x366c
+  80:	6234                	.2byte	0x6234
+  82:	7031                	.2byte	0x7031
+  84:	0030                	.2byte	0x30
+
+Disassembly of section .comment:
+
+0000000000000000 <.comment>:
+   0:	3a434347          	fmsub.d	ft6,ft6,ft4,ft7,rmm
+   4:	2820                	vmsge.vx	v16,v0,zero,v0.t
+   6:	64323467          	.4byte	0x64323467
+   a:	3366                	.2byte	0x3366
+   c:	3634                	.2byte	0x3634
+   e:	3434                	.2byte	0x3434
+  10:	3336                	.2byte	0x3336
+  12:	2029                	.2byte	0x2029
+  14:	3231                	.2byte	0x3231
+  16:	302e                	.2byte	0x302e
+  18:	312e                	.2byte	0x312e
+  1a:	3220                	vmsge.vx	v4,v0,zero,v0.t
+  1c:	3230                	.2byte	0x3230
+  1e:	3032                	.2byte	0x3032
+  20:	3035                	.2byte	0x3035
+  22:	2035                	.2byte	0x2035
+  24:	7028                	.2byte	0x7028
+  26:	6572                	.2byte	0x6572
+  28:	6572                	.2byte	0x6572
+  2a:	656c                	.2byte	0x656c
+  2c:	7361                	vmsge.vx	v6,v0,zero,v0.t
+  2e:	2965                	.2byte	0x2965
+	...
