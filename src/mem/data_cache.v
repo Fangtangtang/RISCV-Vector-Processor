@@ -1,12 +1,14 @@
 // #############################################################################################################################
 // DATA CACHE
 // 
-// 直接映射cache
+// 直接映射write through cache
 // cache line为4byte
 // 
 // 接受来自memory controller的访存请求
-// - 组合逻辑判断是否hit并反馈
-// 如果miss，向memory发请求
+// - load:组合逻辑判断是否hit并反馈
+// |      如果miss，向memory发请求
+// - store:组合逻辑判断是否hit
+// |       如果hit，修改cache，否则直接写内存
 // 
 // cache中数据保持memory中顺序
 // 传出数据时转为正常顺序
@@ -67,17 +69,17 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     wire [CACHE_INDEX_SIZE-1:0] cache_line_index = data_addr[CACHE_INDEX_SIZE+BYTE_SELECT-1:BYTE_SELECT];
     wire [BYTE_SELECT-1:0] select_bit            = data_addr[BYTE_SELECT-1:0];
     
-    // + hit判断
+    // + load hit判断
     // 单字节
-    wire byte_hit = valid[cache_line_index]&&tag[cache_line_index] == addr_tag;
+    wire byte_load_hit = valid[cache_line_index]&&tag[cache_line_index] == addr_tag;
     // 半字
-    wire half_word_hit = valid[cache_line_index]&&tag[cache_line_index] == addr_tag&&(select_bit+1<CACHE_LINE_SIZE|| tag[(cache_line_index+1)%CACHE_SIZE] == addr_tag);
+    wire half_word_load_hit = valid[cache_line_index]&&tag[cache_line_index] == addr_tag&&(select_bit+1<CACHE_LINE_SIZE||(valid[(cache_line_index+1)%CACHE_SIZE]&&tag[(cache_line_index+1)%CACHE_SIZE] == addr_tag));
     // 全字
-    wire word_hit = valid[cache_line_index]&&tag[cache_line_index] == addr_tag&&(select_bit+3<CACHE_LINE_SIZE|| tag[(cache_line_index+1)%CACHE_SIZE] == addr_tag);
+    wire word_load_hit = valid[cache_line_index]&&tag[cache_line_index] == addr_tag&&(select_bit+3<CACHE_LINE_SIZE|| (valid[(cache_line_index+1)%CACHE_SIZE]&&tag[(cache_line_index+1)%CACHE_SIZE] == addr_tag));
     // 如果所要的数据都有，hit
     // EIGHT_BYTE被拆解为2个4byte
-    wire hit         = (data_type == `ONE_BYTE&&byte_hit)||(data_type == `TWO_BYTE&&half_word_hit)||(data_type == `FOUR_BYTE&&word_hit)||(data_type == `EIGHT_BYTE&&word_hit);
-    assign cache_hit = hit;
+    wire load_hit    = (data_type == `ONE_BYTE&&byte_load_hit)||(data_type == `TWO_BYTE&&half_word_load_hit)||(data_type == `FOUR_BYTE&&word_load_hit)||(data_type == `EIGHT_BYTE&&word_load_hit);
+    assign cache_hit = load_hit;
     
     assign write_length = length;
     
@@ -180,8 +182,22 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
         endcase
     end
     
+    // + store hit判断
+    // 最多有效字节数4
+    // 内存+cache中：[b1][b2][b3][b4]
+    // 真实数据中:   [b4][b3][b2][b1]
+    // 第一个字节
+    wire byte1_store_hit = valid[cache_line_index]&&tag[cache_line_index] == addr_tag;
+    // 第二个字节
+    wire byte2_store_hit = (valid[cache_line_index]&&tag[cache_line_index] == addr_tag&&select_bit+1<CACHE_LINE_SIZE)||(valid[(cache_line_index+1)%CACHE_SIZE]&&tag[(cache_line_index+1)%CACHE_SIZE] == addr_tag);
+    // 第三个字节
+    wire byte3_store_hit = (valid[cache_line_index]&&tag[cache_line_index] == addr_tag&&select_bit+2<CACHE_LINE_SIZE)||(valid[(cache_line_index+1)%CACHE_SIZE]&&tag[(cache_line_index+1)%CACHE_SIZE] == addr_tag);
+    // 第四个字节
+    wire byte4_store_hit = (valid[cache_line_index]&&tag[cache_line_index] == addr_tag&&select_bit+3<CACHE_LINE_SIZE)||(valid[(cache_line_index+1)%CACHE_SIZE]&&tag[(cache_line_index+1)%CACHE_SIZE] == addr_tag);
+   
     // 转为内存顺序的数据
     reg [DATA_LEN-1:0] written_data;
+    reg [DATA_LEN-1:0] requested_written_data;
     always @(*) begin
         case(requested_data_type)
             `ONE_BYTE:begin
@@ -229,7 +245,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                             CNT               <= 1;
                             mem_vis_signal    <= `MEM_WRITE;
                             mem_vis_addr      <= _current_addr;
-                            mem_written_data  <= written_data;
+                            mem_written_data  <= requested_written_data;
                             written_data_type <= requested_data_type;
                         end
                         default:
@@ -303,7 +319,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                         end
                         // 都表现为
                         `D_CACHE_LOAD:begin
-                            if (hit)begin
+                            if (load_hit)begin
                                 task_type          <= `D_CACHE_LOAD; // 形式记号，todo：D_CACHE_REST？
                                 data               <= direct_data;
                                 CNT                <= 0;
@@ -318,10 +334,50 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                             end
                         end
                         `D_CACHE_STORE:begin
-                            task_type          <= `D_CACHE_STORE;
-                            CNT                <= 4;
-                            d_cache_vis_status <= `D_CACHE_WORKING;
-                            _current_addr      <= data_addr;
+                            // 修改cache line
+                            // 内存+cache中：[b1][b2][b3][b4]
+                            // 真实数据中:   [b4][b3][b2][b1]
+                            // [b1] hit
+                            if (byte1_store_hit) begin
+                                case (select_bit)
+                                    0:data_line[cache_line_index][31:24] <= cache_written_data[7:0];
+                                    1:data_line[cache_line_index][23:16] <= cache_written_data[7:0];
+                                    2:data_line[cache_line_index][15:8]  <= cache_written_data[7:0];
+                                    3:data_line[cache_line_index][7:0]   <= cache_written_data[7:0];
+                                endcase
+                            end
+                            // [b2] hit
+                            if (byte2_store_hit&&(!(data_type == `ONE_BYTE))) begin
+                                case (select_bit)
+                                    0:data_line[cache_line_index][23:16]                <= cache_written_data[15:8];
+                                    1:data_line[cache_line_index][15:8]                 <= cache_written_data[15:8];
+                                    2:data_line[cache_line_index][7:0]                  <= cache_written_data[15:8];
+                                    3:data_line[(cache_line_index+1)%CACHE_SIZE][31:24] <= cache_written_data[15:8];
+                                endcase
+                            end
+                            // [b3] hit
+                            if (byte3_store_hit&&(data_type == `FOUR_BYTE||data_type == `EIGHT_BYTE)) begin
+                                case (select_bit)
+                                    0:data_line[cache_line_index][15:8]                 <= cache_written_data[23:16];
+                                    1:data_line[cache_line_index][7:0]                  <= cache_written_data[23:16];
+                                    2:data_line[(cache_line_index+1)%CACHE_SIZE][31:24] <= cache_written_data[23:16];
+                                    3:data_line[(cache_line_index+1)%CACHE_SIZE][23:16] <= cache_written_data[23:16];
+                                endcase
+                            end
+                            // [b4] hit
+                            if (byte4_store_hit&&(data_type == `FOUR_BYTE||data_type == `EIGHT_BYTE)) begin
+                                case (select_bit)
+                                    0:data_line[cache_line_index][7:0]                  <= cache_written_data[31:24];
+                                    1:data_line[(cache_line_index+1)%CACHE_SIZE][31:24] <= cache_written_data[31:24];
+                                    2:data_line[(cache_line_index+1)%CACHE_SIZE][23:16] <= cache_written_data[31:24];
+                                    3:data_line[(cache_line_index+1)%CACHE_SIZE][15:8]  <= cache_written_data[31:24];
+                                endcase
+                            end
+                            requested_written_data <= written_data;
+                            task_type              <= `D_CACHE_STORE;
+                            CNT                    <= 4;
+                            d_cache_vis_status     <= `D_CACHE_WORKING;
+                            _current_addr          <= data_addr;
                         end
                         default:
                         $display("[ERROR]:unexpected cache_vis_signal in data cache\n");
