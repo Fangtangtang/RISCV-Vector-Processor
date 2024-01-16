@@ -40,25 +40,34 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
     reg [DATA_LEN-1:0] read_data;
     assign mem_data = read_data;
     
-    wire [BYTE_SIZE-1:0] storage0Value = storage[131052];
-    wire [BYTE_SIZE-1:0] storage1Value = storage[131053];
-    wire [BYTE_SIZE-1:0] storage2Value = storage[131054];
-    wire [BYTE_SIZE-1:0] storage3Value = storage[131055];
-    wire [BYTE_SIZE-1:0] storage4Value = storage[4096];
-    wire [BYTE_SIZE-1:0] storage5Value = storage[4097];
-    wire [BYTE_SIZE-1:0] storage6Value = storage[4098];
-    wire [BYTE_SIZE-1:0] storage7Value = storage[4099];
+    wire [BYTE_SIZE-1:0] storage0Value = storage[130992];
+    wire [BYTE_SIZE-1:0] storage1Value = storage[130993];
+    wire [BYTE_SIZE-1:0] storage2Value = storage[130994];
+    wire [BYTE_SIZE-1:0] storage3Value = storage[130995];
+    wire [BYTE_SIZE-1:0] storage4Value = storage[130996];
+    wire [BYTE_SIZE-1:0] storage5Value = storage[130997];
+    wire [BYTE_SIZE-1:0] storage6Value = storage[130998];
+    wire [BYTE_SIZE-1:0] storage7Value = storage[130999];
+
+    wire [BYTE_SIZE-1:0] storage8Value = storage[4264];
+    wire [BYTE_SIZE-1:0] storage9Value = storage[4265];
+    wire [BYTE_SIZE-1:0] storage10Value = storage[4266];
+    wire [BYTE_SIZE-1:0] storage11Value = storage[4267];
+    wire [BYTE_SIZE-1:0] storage12Value = storage[4268];
+    wire [BYTE_SIZE-1:0] storage13Value = storage[4269];
+    wire [BYTE_SIZE-1:0] storage14Value = storage[4270];
+    wire [BYTE_SIZE-1:0] storage15Value = storage[4271];
     
     
     always @(posedge clk) begin
-        // if(mem_status==`MEM_RESTING)begin
+        // if (mem_status == `MEM_RESTING)begin
         case (mem_tast_type)
             `MEM_NOP:begin
                 mem_status <= `MEM_RESTING;
             end
             `MEM_READ:begin
                 if (read_data_flag) begin
-                    mem_status <= `MEM_DATA_FINISHED;
+                    mem_status       <= `MEM_DATA_FINISHED;
                     read_data[31:24] <= storage[d_cache_mem_vis_addr];
                     read_data[23:16] <= storage[d_cache_mem_vis_addr+1];
                     read_data[15:8]  <= storage[d_cache_mem_vis_addr+2];
@@ -88,6 +97,12 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
                         storage[d_cache_mem_vis_addr+2] <= written_data[15:8];
                         storage[d_cache_mem_vis_addr+3] <= written_data[7:0];
                     end
+                    `EIGHT_BYTE:begin
+                        storage[d_cache_mem_vis_addr]   <= written_data[31:24];
+                        storage[d_cache_mem_vis_addr+1] <= written_data[23:16];
+                        storage[d_cache_mem_vis_addr+2] <= written_data[15:8];
+                        storage[d_cache_mem_vis_addr+3] <= written_data[7:0];
+                    end
                     default:
                     $display("[ERROR]:unexpected data type in main memory\n");
                 endcase
@@ -95,10 +110,6 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
             default:
             $display("[ERROR]:unexpected mem_tast_type in main memory\n");
         endcase
-        // end
-        // else begin
-        //         mem_status <= `MEM_RESTING;
-        // end
     end
     
 endmodule

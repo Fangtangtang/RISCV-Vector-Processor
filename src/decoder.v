@@ -26,7 +26,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                 output wire [3:0] output_exe_signal,
                 output wire [1:0] output_vec_operand_type,
                 output wire [1:0] output_mem_vis_signal,
-                output wire [1:0] output_data_size,
+                output wire [2:0] output_data_size,
                 output wire [1:0] output_vector_l_s_type,
                 output wire [1:0] output_branch_signal,
                 output wire [2:0] output_wb_signal);
@@ -91,7 +91,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
     reg [3:0]                   exe_signal;
     reg [1:0]                   vec_operand_type;
     reg [1:0]                   mem_vis_signal;
-    reg [1:0]                   data_size;
+    reg [2:0]                   data_size;
     reg [1:0]                   vector_l_s_type;
     reg [1:0]                   branch_signal;
     reg [2:0]                   wb_signal;
@@ -133,13 +133,16 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                         mem_vis_signal   = `MEM_CTR_LOAD;
                         case (func3)
                             3'b000:begin
-                                data_size = `BYTE;
+                                data_size = `ONE_BYTE;
                             end
                             3'b101:begin
-                                data_size = `HALF;
+                                data_size = `TWO_BYTE;
                             end
                             3'b110:begin
-                                data_size = `WORD;
+                                data_size = `FOUR_BYTE;
+                            end
+                            3'b111:begin
+                                data_size = `EIGHT_BYTE;
                             end
                             default:
                             $display("[ERROR]:unexpected data width in VL instruction\n");
@@ -167,13 +170,16 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                         mem_vis_signal   = `MEM_CTR_STORE;
                         case (func3)
                             3'b000:begin
-                                data_size = `BYTE;
+                                data_size = `ONE_BYTE;
                             end
                             3'b101:begin
-                                data_size = `HALF;
+                                data_size = `TWO_BYTE;
                             end
                             3'b110:begin
-                                data_size = `WORD;
+                                data_size = `FOUR_BYTE;
+                            end
+                            3'b111:begin
+                                data_size = `EIGHT_BYTE;
                             end
                             default:
                             $display("[ERROR]:unexpected data width in VS instruction\n");
@@ -293,9 +299,10 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                         branch_signal  = `NOT_BRANCH;
                         wb_signal      = `MEM_TO_REG;
                         case (func_code[2:0])
-                            3'b000:data_size = `BYTE;
-                            3'b001:data_size = `HALF;
-                            3'b010:data_size = `WORD;
+                            3'b000:data_size = `ONE_BYTE;
+                            3'b001:data_size = `TWO_BYTE;
+                            3'b010:data_size = `FOUR_BYTE;
+                            3'b011:data_size = `EIGHT_BYTE;
                             default:
                             $display("[ERROR]:unexpected load instruction\n");
                         endcase
@@ -321,9 +328,10 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                 branch_signal    = `NOT_BRANCH;
                 wb_signal        = `WB_NOP;
                 case (func_code[2:0])
-                    3'b000:data_size = `BYTE;
-                    3'b001:data_size = `HALF;
-                    3'b010:data_size = `WORD;
+                    3'b000:data_size = `ONE_BYTE;
+                    3'b001:data_size = `TWO_BYTE;
+                    3'b010:data_size = `FOUR_BYTE;
+                    3'b011:data_size = `EIGHT_BYTE;
                     default:
                     $display("[ERROR]:unexpected load instruction\n");
                 endcase

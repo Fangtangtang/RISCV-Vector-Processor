@@ -29,6 +29,7 @@ module SCALAR_ALU#(parameter ADDR_WIDTH = 17,
             `BINARY:begin
                 case (func_code)
                     `ADD:result = rs1 + rs2;
+                    `SUB:result = rs1 - rs2;
                     default:
                     $display("[ERROR]:unexpected binary instruction\n");
                 endcase

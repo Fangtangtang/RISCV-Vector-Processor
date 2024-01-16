@@ -134,6 +134,9 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
             `FOUR_BYTE:begin
                 direct_data = {direct_word[BYTE_SIZE-1:0],direct_word[2*BYTE_SIZE-1:BYTE_SIZE],direct_word[3*BYTE_SIZE-1:2*BYTE_SIZE],direct_word[4*BYTE_SIZE-1:3*BYTE_SIZE]};
             end
+            `EIGHT_BYTE:begin
+                direct_data = {direct_word[BYTE_SIZE-1:0],direct_word[2*BYTE_SIZE-1:BYTE_SIZE],direct_word[3*BYTE_SIZE-1:2*BYTE_SIZE],direct_word[4*BYTE_SIZE-1:3*BYTE_SIZE]};
+            end
             default:
             $display("[ERROR]:unexpected data type in data cache\n");
         endcase
@@ -177,6 +180,9 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
             `FOUR_BYTE:begin
                 indirect_data = {indirect_word[BYTE_SIZE-1:0],indirect_word[2*BYTE_SIZE-1:BYTE_SIZE],indirect_word[3*BYTE_SIZE-1:2*BYTE_SIZE],indirect_word[4*BYTE_SIZE-1:3*BYTE_SIZE]};
             end
+            `EIGHT_BYTE:begin
+                indirect_data = {indirect_word[BYTE_SIZE-1:0],indirect_word[2*BYTE_SIZE-1:BYTE_SIZE],indirect_word[3*BYTE_SIZE-1:2*BYTE_SIZE],indirect_word[4*BYTE_SIZE-1:3*BYTE_SIZE]};
+            end
             default:
             $display("[ERROR]:unexpected requested data type in data cache\n");
         endcase
@@ -194,7 +200,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     wire byte3_store_hit = (valid[cache_line_index]&&tag[cache_line_index] == addr_tag&&select_bit+2<CACHE_LINE_SIZE)||(valid[(cache_line_index+1)%CACHE_SIZE]&&tag[(cache_line_index+1)%CACHE_SIZE] == addr_tag);
     // 第四个字节
     wire byte4_store_hit = (valid[cache_line_index]&&tag[cache_line_index] == addr_tag&&select_bit+3<CACHE_LINE_SIZE)||(valid[(cache_line_index+1)%CACHE_SIZE]&&tag[(cache_line_index+1)%CACHE_SIZE] == addr_tag);
-   
+    
     // 转为内存顺序的数据
     reg [DATA_LEN-1:0] written_data;
     reg [DATA_LEN-1:0] requested_written_data;
@@ -207,6 +213,9 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                 written_data = {cache_written_data[7:0],cache_written_data[15:8],16'b0};
             end
             `FOUR_BYTE:begin
+                written_data = {cache_written_data[7:0],cache_written_data[15:8],cache_written_data[23:16],cache_written_data[31:24]};
+            end
+            `EIGHT_BYTE:begin
                 written_data = {cache_written_data[7:0],cache_written_data[15:8],cache_written_data[23:16],cache_written_data[31:24]};
             end
             default:

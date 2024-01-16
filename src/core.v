@@ -104,7 +104,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     reg                             ID_EXE_IS_VEC_INST;
     reg [3:0]                       ID_EXE_ALU_SIGNAL;        // ALU信号
     reg [1:0]                       ID_EXE_MEM_VIS_SIGNAL;    // 访存信号
-    reg [1:0]                       ID_EXE_MEM_VIS_DATA_SIZE; // todo:scalar?
+    reg [2:0]                       ID_EXE_MEM_VIS_DATA_SIZE; // todo:scalar?
     reg [1:0]                       ID_EXE_BRANCH_SIGNAL;
     reg [2:0]                       ID_EXE_WB_SIGNAL;
     
@@ -132,7 +132,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     reg                         EXE_MEM_IS_VEC_INST;
     reg                         EXE_MEM_OP_ON_MASK;            // 是对mask的操作
     reg [1:0]                   EXE_MEM_MEM_VIS_SIGNAL;
-    reg [1:0]                   EXE_MEM_MEM_VIS_DATA_SIZE;
+    reg [2:0]                   EXE_MEM_MEM_VIS_DATA_SIZE;
     reg [1:0]                   EXE_MEM_BRANCH_SIGNAL;
     reg [2:0]                   EXE_MEM_WB_SIGNAL;
     
@@ -160,14 +160,6 @@ module CORE#(parameter ADDR_WIDTH = 17,
     
     // MEM VISIT
     // ---------------------------------------------------------------------------------------------
-    reg [2:0] scalar_data_type;
-    always @(*) begin
-        case (EXE_MEM_MEM_VIS_DATA_SIZE)
-            `BYTE: scalar_data_type = `ONE_BYTE;
-            `HALF: scalar_data_type = `TWO_BYTE;
-            `WORD: scalar_data_type = `FOUR_BYTE;
-        endcase
-    end
     
     assign mem_inst_addr         = PC[ADDR_WIDTH-1:0];
     assign inst_fetch_enabled    = IF_STATE_CTR;
@@ -181,7 +173,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     assign mem_write_vector_data = EXE_MEM_VS3;
     assign vector_length         = EXE_MEM_VL;
     assign is_vector             = EXE_MEM_IS_VEC_INST;
-    assign data_type             = EXE_MEM_IS_VEC_INST? EXE_MEM_VSEW : scalar_data_type;
+    assign data_type             = EXE_MEM_IS_VEC_INST? EXE_MEM_VSEW : EXE_MEM_MEM_VIS_DATA_SIZE;
     
     
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -213,7 +205,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     wire [3:0]     	            decoder_output_exe_signal;
     wire [1:0]     	            decoder_output_vec_operand_type;
     wire [1:0]     	            decoder_output_mem_vis_signal;
-    wire [1:0]     	            decoder_output_data_size;
+    wire [2:0]     	            decoder_output_data_size;
     wire [1:0]     	            decoder_output_vector_l_s_type;
     wire [1:0]     	            decoder_output_branch_signal;
     wire [2:0]     	            decoder_output_wb_signal;

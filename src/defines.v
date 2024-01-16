@@ -22,13 +22,16 @@
 
 // CSR
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// VSEW     [2:0]
-// dynamic selected element width
-// By default, a vector register is viewed as being divided into VLEN/SEW elements
+// - VSEW     [2:0]
+// | dynamic selected element width
+// | By default, a vector register is viewed as being divided into VLEN/SEW elements
+// - 访存数据类型
 `define     ONE_BYTE            3'b000
 `define     TWO_BYTE            3'b001
 `define     FOUR_BYTE           3'b010
 `define     EIGHT_BYTE          3'b011 
+
+`define     NOT_ACCESS          3'b100
 
 `define     ONE_BIT             3'b111
 
@@ -130,6 +133,7 @@
 
 // BINARY
 `define     ADD                     4'b0000
+`define     SUB                     4'b1000
 
 // IMM
 `define     ADDI                    3'b000
@@ -180,10 +184,10 @@
 // Data Size
 // ----------------------------------------------------------
 // 访存数据类型
-`define     BYTE                    2'b00
-`define     HALF                    2'b01
-`define     WORD                    2'b10
-`define     NOT_ACCESS              2'b11
+// `define     BYTE                    2'b00
+// `define     HALF                    2'b01
+// `define     WORD                    2'b10
+// `define     NOT_ACCESS              2'b11
 
 
 // vector访存形式
@@ -204,7 +208,7 @@
 `define     MEM_TO_REG              3'b001
 `define     ARITH                   3'b010
 `define     INCREASED_PC            3'b011
-`define     CSR_TO_REG              3'b011
+`define     CSR_TO_REG              3'b100
 
 // ENCODING
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
