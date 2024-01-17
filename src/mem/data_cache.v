@@ -65,6 +65,23 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
     wire [DATA_LEN-1:0] storage14Value = data_line[14];
     wire [DATA_LEN-1:0] storage15Value = data_line[15];
     
+    wire [TAG_SIZE-1:0] storage0Tag  = tag[0];
+    wire [TAG_SIZE-1:0] storage1Tag  = tag[1];
+    wire [TAG_SIZE-1:0] storage2Tag  = tag[2];
+    wire [TAG_SIZE-1:0] storage3Tag  = tag[3];
+    wire [TAG_SIZE-1:0] storage4Tag  = tag[4];
+    wire [TAG_SIZE-1:0] storage5Tag  = tag[5];
+    wire [TAG_SIZE-1:0] storage6Tag  = tag[6];
+    wire [TAG_SIZE-1:0] storage7Tag  = tag[7];
+    wire [TAG_SIZE-1:0] storage8Tag  = tag[8];
+    wire [TAG_SIZE-1:0] storage9Tag  = tag[9];
+    wire [TAG_SIZE-1:0] storage10Tag = tag[10];
+    wire [TAG_SIZE-1:0] storage11Tag = tag[11];
+    wire [TAG_SIZE-1:0] storage12Tag = tag[12];
+    wire [TAG_SIZE-1:0] storage13Tag = tag[13];
+    wire [TAG_SIZE-1:0] storage14Tag = tag[14];
+    wire [TAG_SIZE-1:0] storage15Tag = tag[15];
+
     wire [TAG_SIZE-1:0] addr_tag                 = data_addr[ADDR_WIDTH-1:CACHE_INDEX_SIZE+BYTE_SELECT];
     wire [CACHE_INDEX_SIZE-1:0] cache_line_index = data_addr[CACHE_INDEX_SIZE+BYTE_SELECT-1:BYTE_SELECT];
     wire [BYTE_SELECT-1:0] select_bit            = data_addr[BYTE_SELECT-1:0];

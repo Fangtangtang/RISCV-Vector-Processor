@@ -495,8 +495,19 @@ module CORE#(parameter ADDR_WIDTH = 17,
     // ---------------------------------------------------------------------------------------------
     always @(posedge clk) begin
         if ((!rst)&&rdy_in&&start_cpu)begin
+            // 所有向量计算完成
+            if (vector_function_unit_vector_alu_status == `VEC_ALU_FINISHED) begin
+                // 记录结果
+                EXE_MEM_VECTOR_RESULT <= vector_function_unit_result;
+                EXE_MEM_OP_ON_MASK    <= vector_function_unit_is_mask;
+                
+                MEM_STATE_CTR <= 1;
+            end
+            else begin
+                MEM_STATE_CTR <= 0;
+            end
             // 标量指令
-            if (EXE_STATE_CTR && (!ID_EXE_IS_VEC_INST||ID_EXE_VEC_OPERAND_TYPE == `NOT_VEC_ARITH)) begin
+            if (EXE_STATE_CTR && !ID_EXE_IS_VEC_INST) begin
                 EXE_MEM_PC <= ID_EXE_PC;
                 
                 EXE_MEN_CSR           <= ID_EXE_CSR;
@@ -519,8 +530,33 @@ module CORE#(parameter ADDR_WIDTH = 17,
             end
             else begin
                 // 要做向量运算
-                if (EXE_STATE_CTR) begin
-                    if (vector_function_unit_vector_alu_status == `VEC_ALU_NOP) begin
+                if (EXE_STATE_CTR&&ID_EXE_VEC_OPERAND_TYPE == `NOT_VEC_ARITH) begin
+                    EXE_MEM_PC <= ID_EXE_PC;
+                    
+                    EXE_MEN_CSR           <= ID_EXE_CSR;
+                    EXE_MEM_SCALAR_RESULT <= scalar_alu_result;
+                    EXE_MEM_ZERO_BITS     <= scalar_alu_sign_bits;
+                    EXE_MEM_RS2           <= ID_EXE_RS2;
+                    EXE_MEM_VS3           <= ID_EXE_VS3;
+                    
+                    EXE_MEM_VM    <= ID_EXE_VM;
+                    EXE_MEM_VL    <= ID_EXE_VL;
+                    EXE_MEM_VTYPE <= ID_EXE_VTYPE;
+                    
+                    EXE_MEM_IMM       <= ID_EXE_IMM;
+                    EXE_MEM_RD_INDEX  <= ID_EXE_RD_INDEX;
+                    EXE_MEM_FUNC_CODE <= ID_EXE_FUNC_CODE;
+                    
+                    EXE_MEM_IS_VEC_INST       <= ID_EXE_IS_VEC_INST;
+                    EXE_MEM_MEM_VIS_SIGNAL    <= ID_EXE_MEM_VIS_SIGNAL;
+                    EXE_MEM_MEM_VIS_DATA_SIZE <= ID_EXE_MEM_VIS_DATA_SIZE;
+                    EXE_MEM_BRANCH_SIGNAL     <= ID_EXE_BRANCH_SIGNAL;
+                    EXE_MEM_WB_SIGNAL         <= ID_EXE_WB_SIGNAL;
+                    
+                    MEM_STATE_CTR <= 1;
+                end
+                else begin
+                    if (EXE_STATE_CTR&&vector_function_unit_vector_alu_status == `VEC_ALU_NOP) begin
                         // 更新transfer register
                         EXE_MEM_PC <= ID_EXE_PC;
                         
@@ -540,17 +576,6 @@ module CORE#(parameter ADDR_WIDTH = 17,
                         EXE_MEM_BRANCH_SIGNAL     <= ID_EXE_BRANCH_SIGNAL;
                         EXE_MEM_WB_SIGNAL         <= ID_EXE_WB_SIGNAL;
                     end
-                end
-                // 所有向量计算完成
-                if (vector_function_unit_vector_alu_status == `VEC_ALU_FINISHED) begin
-                    // 记录结果
-                    EXE_MEM_VECTOR_RESULT <= vector_function_unit_result;
-                    EXE_MEM_OP_ON_MASK    <= vector_function_unit_is_mask;
-                    
-                    MEM_STATE_CTR <= 1;
-                end
-                else begin
-                    MEM_STATE_CTR <= 0;
                 end
             end
         end

@@ -77,14 +77,14 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                 written_data1 = {24'b0,_written_vector_data_slices[current_length]};
             end
             `TWO_BYTE:begin
-                written_data1 = {16'b0,_written_vector_data_slices[current_length<<1+1],_written_vector_data_slices[current_length<<1]};
+                written_data1 = {16'b0,_written_vector_data_slices[(current_length<<1)+1],_written_vector_data_slices[(current_length<<1)]};
             end
             `FOUR_BYTE:begin
-                written_data1 = {_written_vector_data_slices[current_length<<2+3],_written_vector_data_slices[current_length<<2+2],_written_vector_data_slices[current_length<<2+1],_written_vector_data_slices[current_length<<2]};
+                written_data1 = {_written_vector_data_slices[(current_length<<2)+3],_written_vector_data_slices[(current_length<<2)+2],_written_vector_data_slices[(current_length<<2)+1],_written_vector_data_slices[(current_length<<2)]};
             end
             `EIGHT_BYTE:begin
-                written_data2 = {_written_vector_data_slices[current_length<<4+7],_written_vector_data_slices[current_length<<4+6],_written_vector_data_slices[current_length<<4+5],_written_vector_data_slices[current_length<<4+4]};
-                written_data1 = {_written_vector_data_slices[current_length<<4+3],_written_vector_data_slices[current_length<<4+2],_written_vector_data_slices[current_length<<4+1],_written_vector_data_slices[current_length<<4]};
+                written_data2 = {_written_vector_data_slices[(current_length<<4)+7],_written_vector_data_slices[(current_length<<4)+6],_written_vector_data_slices[(current_length<<4)+5],_written_vector_data_slices[(current_length<<4)+4]};
+                written_data1 = {_written_vector_data_slices[(current_length<<4)+3],_written_vector_data_slices[(current_length<<4)+2],_written_vector_data_slices[(current_length<<4)+1],_written_vector_data_slices[(current_length<<4)]};
             end
             default:
             $display("[ERROR]:unexpected requested_data_type in mem ctr\n");
@@ -98,6 +98,23 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
     for (i = 0;i<DATA_LEN*VECTOR_SIZE/BYTE_SIZE;i = i+1) begin
         assign load_vector_data[(i+1)*8 - 1 : i*8] = load_vector_data_slices[i];
     end
+    
+    wire [BYTE_SIZE-1:0] storage0Value  = load_vector_data_slices[0];
+    wire [BYTE_SIZE-1:0] storage1Value  = load_vector_data_slices[1];
+    wire [BYTE_SIZE-1:0] storage2Value  = load_vector_data_slices[2];
+    wire [BYTE_SIZE-1:0] storage3Value  = load_vector_data_slices[3];
+    wire [BYTE_SIZE-1:0] storage4Value  = load_vector_data_slices[4];
+    wire [BYTE_SIZE-1:0] storage5Value  = load_vector_data_slices[5];
+    wire [BYTE_SIZE-1:0] storage6Value  = load_vector_data_slices[6];
+    wire [BYTE_SIZE-1:0] storage7Value  = load_vector_data_slices[7];
+    wire [BYTE_SIZE-1:0] storage8Value  = load_vector_data_slices[8];
+    wire [BYTE_SIZE-1:0] storage9Value  = load_vector_data_slices[9];
+    wire [BYTE_SIZE-1:0] storage10Value = load_vector_data_slices[10];
+    wire [BYTE_SIZE-1:0] storage11Value = load_vector_data_slices[11];
+    wire [BYTE_SIZE-1:0] storage12Value = load_vector_data_slices[12];
+    wire [BYTE_SIZE-1:0] storage13Value = load_vector_data_slices[13];
+    wire [BYTE_SIZE-1:0] storage14Value = load_vector_data_slices[14];
+    wire [BYTE_SIZE-1:0] storage15Value = load_vector_data_slices[15];
     
     assign d_cache_data_type = requested_data_type;
     
@@ -117,12 +134,12 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                                     cache_vis_signal <= `D_CACHE_NOP;
                                 end
                                 if (requested_data_type == `EIGHT_BYTE)begin
-                                    CNT            <= 2;
-                                    current_length <= current_length;
+                                    CNT               <= 2;
+                                    // current_length <= current_length;
                                 end
                                 else begin
-                                    CNT            <= 1;
-                                    current_length <= current_length+1;
+                                    CNT               <= 1;
+                                    // current_length <= current_length+1;
                                 end
                             end
                             else begin
@@ -145,12 +162,12 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                                 end
                                 cache_written_data <= written_data1; // 第一个待写数据
                                 if (requested_data_type == `EIGHT_BYTE)begin
-                                    CNT            <= 2;
-                                    current_length <= current_length;
+                                    CNT               <= 2;
+                                    // current_length <= current_length;
                                 end
                                 else begin
-                                    CNT            <= 1;
-                                    current_length <= current_length+1;
+                                    CNT               <= 1;
+                                    // current_length <= current_length+1;
                                 end
                             end
                             else begin
@@ -181,13 +198,12 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                         if (d_cache_status == `L_S_FINISHED)begin
                             current_addr <= current_addr+4;
                             if (visit_vector) begin
-                                load_vector_data_slices[(current_length)<<4]   <= mem_data[7:0];
-                                load_vector_data_slices[(current_length)<<4+1] <= mem_data[15:8];
-                                load_vector_data_slices[(current_length)<<4+2] <= mem_data[23:16];
-                                load_vector_data_slices[(current_length)<<4+3] <= mem_data[31:24];
+                                load_vector_data_slices[((current_length)<<4)]   <= mem_data[7:0];
+                                load_vector_data_slices[((current_length)<<4)+1] <= mem_data[15:8];
+                                load_vector_data_slices[((current_length)<<4)+2] <= mem_data[23:16];
+                                load_vector_data_slices[((current_length)<<4)+3] <= mem_data[31:24];
                                 CNT                                            <= 1;
                                 cache_vis_signal                               <= `D_CACHE_LOAD;
-                                // current_length                                 <= current_length+1;
                             end
                             else begin
                                 scalar_data[DATA_LEN-1:0] <= mem_data;
@@ -203,7 +219,7 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                                 CNT                <= 1;
                                 cache_vis_signal   <= `D_CACHE_STORE;
                                 cache_written_data <= written_data2;
-                                current_length     <= current_length+1;
+                                // current_length  <= current_length+1;
                             end
                             else begin
                                 CNT                <= 1;
@@ -224,26 +240,26 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                             if (visit_vector) begin
                                 case(requested_data_type)
                                     `ONE_BYTE:begin
-                                        load_vector_data_slices[current_length-1] <= mem_data[7:0];
+                                        load_vector_data_slices[current_length] <= mem_data[7:0];
                                         current_addr                              <= current_addr+1;
                                     end
                                     `TWO_BYTE:begin
-                                        load_vector_data_slices[(current_length-1)<<1]   <= mem_data[7:0];
-                                        load_vector_data_slices[(current_length-1)<<1+1] <= mem_data[15:8];
+                                        load_vector_data_slices[((current_length)<<1)]   <= mem_data[7:0];
+                                        load_vector_data_slices[((current_length)<<1)+1] <= mem_data[15:8];
                                         current_addr                                     <= current_addr+2;
                                     end
                                     `FOUR_BYTE:begin
-                                        load_vector_data_slices[(current_length-1)<<2]   <= mem_data[7:0];
-                                        load_vector_data_slices[(current_length-1)<<2+1] <= mem_data[15:8];
-                                        load_vector_data_slices[(current_length-1)<<2+2] <= mem_data[23:16];
-                                        load_vector_data_slices[(current_length-1)<<2+3] <= mem_data[31:24];
+                                        load_vector_data_slices[(current_length)<<2]   <= mem_data[7:0];
+                                        load_vector_data_slices[((current_length)<<2)+1] <= mem_data[15:8];
+                                        load_vector_data_slices[((current_length)<<2)+2] <= mem_data[23:16];
+                                        load_vector_data_slices[((current_length)<<2)+3] <= mem_data[31:24];
                                         current_addr                                     <= current_addr+4;
                                     end
                                     `EIGHT_BYTE:begin
-                                        load_vector_data_slices[(current_length)<<4+4] <= mem_data[7:0];
-                                        load_vector_data_slices[(current_length)<<4+5] <= mem_data[15:8];
-                                        load_vector_data_slices[(current_length)<<4+6] <= mem_data[23:16];
-                                        load_vector_data_slices[(current_length)<<4+7] <= mem_data[31:24];
+                                        load_vector_data_slices[((current_length)<<4)+4] <= mem_data[7:0];
+                                        load_vector_data_slices[((current_length)<<4)+5] <= mem_data[15:8];
+                                        load_vector_data_slices[((current_length)<<4)+6] <= mem_data[23:16];
+                                        load_vector_data_slices[((current_length)<<4)+7] <= mem_data[31:24];
                                         current_addr                                   <= current_addr+4;
                                     end
                                     default:
@@ -253,6 +269,10 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                                     CNT              <= 0;
                                     mem_vis_status   <= `MEM_CTR_FINISHED;
                                     cache_vis_signal <= `D_CACHE_NOP;
+                                end
+                                else begin
+                                    current_length <= current_length+1;
+                                    // todo?
                                 end
                             end
                             else begin
@@ -268,12 +288,13 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                             end
                         end
                         if (d_cache_status == `D_CACHE_RESTING)begin
+                            // todo
                             if (visit_vector) begin
                                 // 未结束
                                 if (current_length+1 < requested_length)begin
-                                    current_length <= current_length+1;
-                                    CNT            <= 1;
-                                    mem_vis_status <= `MEM_CTR_WORKING;
+                                    // current_length <= current_length+1;
+                                    CNT               <= 1;
+                                    mem_vis_status    <= `MEM_CTR_WORKING;
                                     if (_mask[current_length]||_vm)begin
                                         cache_vis_signal <= `D_CACHE_LOAD;
                                     end
@@ -291,6 +312,12 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                                 mem_vis_status   <= `MEM_CTR_FINISHED;
                                 cache_vis_signal <= `D_CACHE_NOP;
                             end
+                            else begin
+                                current_length   <= current_length+1;
+                                cache_vis_signal <= `D_CACHE_STORE;
+                                CNT              <= 1;
+                                mem_vis_status   <= `MEM_CTR_WORKING;
+                            end
                         end
                         if (d_cache_status == `D_CACHE_RESTING)begin
                             if (visit_vector&&(current_length+1 < requested_length)) begin
@@ -304,7 +331,7 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 17,
                                     $display("[ERROR]:unexpected data type when cnt == 1 in memory controller\n");
                                 endcase
                                 cache_written_data <= written_data1;
-                                current_length     <= current_length+1;
+                                // current_length  <= current_length+1;
                                 CNT                <= 1;
                                 mem_vis_status     <= `MEM_CTR_WORKING;
                                 if (_mask[current_length]||_vm)begin

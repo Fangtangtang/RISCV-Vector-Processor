@@ -218,9 +218,9 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     endgenerate
     
     // 16bits
-    wire [15:0] t_byte_vs1 [VECTOR_SIZE<<1-1:0];
-    wire [15:0] t_byte_vs2 [VECTOR_SIZE<<1-1:0];
-    wire [15:0] t_byte_vs3 [VECTOR_SIZE<<1-1:0];
+    wire [15:0] t_byte_vs1 [(VECTOR_SIZE<<1)-1:0];
+    wire [15:0] t_byte_vs2 [(VECTOR_SIZE<<1)-1:0];
+    wire [15:0] t_byte_vs3 [(VECTOR_SIZE<<1)-1:0];
     
     generate
     genvar t_i;
@@ -232,9 +232,9 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     endgenerate
     
     // 8bits
-    wire [7:0] o_byte_vs1 [VECTOR_SIZE<<2-1:0];
-    wire [7:0] o_byte_vs2 [VECTOR_SIZE<<2-1:0];
-    wire [7:0] o_byte_vs3 [VECTOR_SIZE<<2-1:0];
+    wire [7:0] o_byte_vs1 [(VECTOR_SIZE<<2)-1:0];
+    wire [7:0] o_byte_vs2 [(VECTOR_SIZE<<2)-1:0];
+    wire [7:0] o_byte_vs3 [(VECTOR_SIZE<<2)-1:0];
     
     generate
     genvar o_i;
