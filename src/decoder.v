@@ -128,7 +128,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                 case (opcode)
                     // vector load
                     `VL:begin
-                        exe_signal       = `MEM_ADDR;
+                        exe_signal       = `VEC_MEM_ADDR;
                         vec_operand_type = `NOT_VEC_ARITH;
                         mem_vis_signal   = `MEM_CTR_LOAD;
                         case (func3)
@@ -165,7 +165,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
                     end
                     // vector store
                     `VS:begin
-                        exe_signal       = `MEM_ADDR;
+                        exe_signal       = `VEC_MEM_ADDR;
                         vec_operand_type = `NOT_VEC_ARITH;
                         mem_vis_signal   = `MEM_CTR_STORE;
                         case (func3)

@@ -118,6 +118,7 @@
 `define     IMM_BINARY_WORD         4'b1001
 
 `define     READ_CSR                4'b1010
+`define     VEC_MEM_ADDR            4'b1011
 
 
 // vector运算类型
@@ -180,15 +181,6 @@
 `define     VL                      7'b0000111
 `define     VS                      7'b0100111
 `define     VARITH                  7'b1010111
-
-// Data Size
-// ----------------------------------------------------------
-// 访存数据类型
-// `define     BYTE                    2'b00
-// `define     HALF                    2'b01
-// `define     WORD                    2'b10
-// `define     NOT_ACCESS              2'b11
-
 
 // vector访存形式
 `define     STRIDE                  2'b01

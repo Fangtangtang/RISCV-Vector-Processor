@@ -53,7 +53,40 @@ module VECTOR_REGISTER_FILE#(parameter ADDR_WIDTH = 17,
     
     reg [VECTOR_SIZE*DATA_LEN-1:0] writen_data;
     
-    
+    // register value
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg0Value  = register[0];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg1Value  = register[1];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg2Value  = register[2];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg3Value  = register[3];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg4Value  = register[4];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg5Value  = register[5];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg6Value  = register[6];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg7Value  = register[7];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg8Value  = register[8];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg9Value  = register[9];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg10Value = register[10];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg11Value = register[11];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg12Value = register[12];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg13Value = register[13];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg14Value = register[14];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg15Value = register[15];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg16Value = register[16];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg17Value = register[17];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg18Value = register[18];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg19Value = register[19];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg20Value = register[20];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg21Value = register[21];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg22Value = register[22];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg23Value = register[23];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg24Value = register[24];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg25Value = register[25];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg26Value = register[26];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg27Value = register[27];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg28Value = register[28];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg29Value = register[29];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg30Value = register[30];
+    wire [VECTOR_SIZE*DATA_LEN - 1:0] reg31Value = register[31];
+  
     always @(posedge clk) begin
         if ((!rst)&&rdy_in)begin
             // 读

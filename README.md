@@ -311,17 +311,24 @@ vs2r.v	v24,(a2)
 ```
 
 #### Configure Setting
+
+rd可以认为是VL？
+
+AVL:application vector length
+
 ```
  vsetvli rd, rs1, vtypei # rd = new vl, rs1 = AVL, vtypei = new vtype setting
- vsetvli zero,a3,e32,m2,ta,mu
+ vsetvli zero,a3,e32,m2,ta,mu	# ta：tail agnostic暂不做处理；mu：mask
 ```
 
  ```
 31    30                       20 19         15 14 12 11          7 6       0
 +----+---------------------------+-------------+-----+-------------+---------+
-|  0 |             vsew vlmul    |     rs1     | 111 |     rd      | 1010111 | VSETVLI
-|  0 |    00001     010 001      |    01101    | 111 |   00000     | 1010111 | vsetvli
+|  0 |        mask vsew vlmul    |     rs1     | 111 |     rd      | 1010111 | VSETVLI
+|  0 |   000 0 1    010 001      |    01101    | 111 |   00000     | 1010111 | vsetvli
 
+|  0 |   000 0 1    010 000      |    01111    | 111 |   00000     | 1010111 | vsetvli
+vsetvli	zero,a5,e32,m1,ta,mu
  ```
 Suggested assembler names used for vset{i}vl{i} vtypei immediate
 ```

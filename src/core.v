@@ -60,17 +60,18 @@ module CORE#(parameter ADDR_WIDTH = 17,
     // Control and Status Register
     
     // vl:vector length
-    reg [31:0] VL;
+    reg [31:0] VL = 0;
     
     // vlenb:`VLEN`/8 (vector register length in bytes), read only
     reg [31:0] VLENB = DATA_LEN*VECTOR_SIZE/BYTE_SIZE;
     
     // vtype:vector data type register
-    reg [31:0] VTYPE;
+    reg [31:0] VTYPE = 0;
     // vsew[2:0]:Selected element width (SEW) setting
     wire [2:0] VSEW = VTYPE[5:3];
     // vlmul[2:0].:vector register group multiplier (LMUL) setting
     wire [2:0] VLMUL = VTYPE[2:0];
+    wire VMA         = VTYPE[7];
     
     // Transfer Register
     
@@ -88,7 +89,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     reg [VECTOR_SIZE*DATA_LEN - 1:0] ID_EXE_VS2;
     reg [VECTOR_SIZE*DATA_LEN - 1:0] ID_EXE_VS3;
     
-    reg                             ID_EXE_VM;
+    reg                             ID_EXE_VM;              // 1:disabled
     reg [31:0]                      ID_EXE_VL;
     reg [31:0]                      ID_EXE_VTYPE;
     wire [2:0]                      ID_EXE_VSEW  = ID_EXE_VTYPE[5:3];
@@ -352,7 +353,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     localparam LANE_INDEX_SIZE = 1;
     // inports wire
     wire                        vector_function_unit_execute;
-    assign vector_function_unit_execute = ID_EXE_IS_VEC_INST;
+    assign vector_function_unit_execute = ID_EXE_IS_VEC_INST&&EXE_STATE_CTR;
     // outports wire
     wire                       	        vector_function_unit_is_mask;
     wire [VECTOR_SIZE*DATA_LEN-1:0] 	vector_function_unit_result;
@@ -460,6 +461,12 @@ module CORE#(parameter ADDR_WIDTH = 17,
                 ID_EXE_VL    <= VL;
                 ID_EXE_VTYPE <= VTYPE;
                 
+                // set configuration
+                if (decoder_output_exe_signal == `SET_CFG) begin
+                    VL         <= scalar_rf_rs1_data[31:0]; // todo: longer VL?
+                    VTYPE[7:0] <= {decoder_zimm[6],decoder_zimm[7],decoder_zimm[5:0]};
+                end
+                
                 ID_EXE_IMM              <= decoder_output_immediate;
                 ID_EXE_RD_INDEX         <= decoder_reg3_index;
                 ID_EXE_FUNC_CODE        <= decoder_output_func_code;
@@ -489,7 +496,7 @@ module CORE#(parameter ADDR_WIDTH = 17,
     always @(posedge clk) begin
         if ((!rst)&&rdy_in&&start_cpu)begin
             // 标量指令
-            if (EXE_STATE_CTR && !ID_EXE_IS_VEC_INST) begin
+            if (EXE_STATE_CTR && (!ID_EXE_IS_VEC_INST||ID_EXE_VEC_OPERAND_TYPE == `NOT_VEC_ARITH)) begin
                 EXE_MEM_PC <= ID_EXE_PC;
                 
                 EXE_MEN_CSR           <= ID_EXE_CSR;

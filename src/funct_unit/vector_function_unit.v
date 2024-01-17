@@ -63,7 +63,7 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     reg [1:0] operand_type;
     reg [5:0] alu_opcode;
     reg is_mask_operation;
-    reg [1:0] working_status;
+    reg [1:0] working_status = `VEC_ALU_NOP;
     
     reg [ENTRY_INDEX_SIZE:0] next;          // 下一周期起始index
     
@@ -249,22 +249,28 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
     always @(posedge clk) begin
         case (working_status)
             `VEC_ALU_NOP:begin
-                if (execute && length > 0) begin
-                    previous_vsew     <= VSEW;
-                    masked            <= vm;
-                    vector_length     <= length;
-                    vs1_              <= vs1;
-                    vs2_              <= vs2;
-                    vs3_              <= vs3;
-                    mask_             <= mask;
-                    imm_              <= imm;
-                    rs_               <= rs;
-                    task_type         <= alu_signal;
-                    operand_type      <= vec_operand_type;
-                    alu_opcode        <= opcode;
-                    is_mask_operation <= is_mask_op;
-                    current_vsew      <= vsew;
-                    working_status    <= `VEC_ALU_WORKING;
+                if (execute) begin
+                    if (!(vec_operand_type == `NOT_VEC_ARITH)&&length > 0) begin
+                        previous_vsew     <= VSEW;
+                        masked            <= vm;
+                        vector_length     <= length;
+                        vs1_              <= vs1;
+                        vs2_              <= vs2;
+                        vs3_              <= vs3;
+                        mask_             <= mask;
+                        imm_              <= imm;
+                        rs_               <= rs;
+                        task_type         <= alu_signal;
+                        operand_type      <= vec_operand_type;
+                        alu_opcode        <= opcode;
+                        is_mask_operation <= is_mask_op;
+                        current_vsew      <= vsew;
+                        working_status    <= `VEC_ALU_WORKING;
+                    end
+                    else begin
+                        next           <= 0;
+                        working_status <= `VEC_ALU_FINISHED;
+                    end
                 end
             end
             `VEC_ALU_WORKING:begin
@@ -304,27 +310,8 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
                 end
             end
             `VEC_ALU_FINISHED:begin
-                if (execute && length > 0) begin
-                    previous_vsew     <= VSEW;
-                    masked            <= vm;
-                    vector_length     <= length;
-                    vs1_              <= vs1;
-                    vs2_              <= vs2;
-                    vs3_              <= vs3;
-                    mask_             <= mask;
-                    imm_              <= imm;
-                    rs_               <= rs;
-                    task_type         <= alu_signal;
-                    operand_type      <= vec_operand_type;
-                    alu_opcode        <= opcode;
-                    is_mask_operation <= is_mask_op;
-                    current_vsew      <= vsew;
-                    working_status    <= `VEC_ALU_WORKING;
-                    next              <= 0;
-                end
-                else begin
-                    working_status <= `VEC_ALU_NOP;
-                end
+                next           <= 0;
+                working_status <= `VEC_ALU_NOP;
             end
             default:
             $display("[ERROR]:unexpected working status in vector function unit\n");

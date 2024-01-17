@@ -15,29 +15,29 @@ Disassembly of section .rom:
 Disassembly of section .text:
 
 0000000000001000 <main>:
-    1000:	fd010113          	addi	sp,sp,-48   # 1ffd0 <__heap_start+0x1dfd0> r2 向下开栈空间48
+    1000:	fd010113          	addi	sp,sp,-48     # 1ffd0 <__heap_start+0x1dfd0> r2 向下开栈空间48
     1004:	02813423          	sd	s0,40(sp)       # M[x[rs1(2)] + sext(offset) ] = x[rs2(8)][63: 0]
-    1008:	03010413          	addi	s0,sp,48    # 栈底（起始地址）
-    100c:	c22022f3          	csrr	t0,vlenb    # r5 = vlenb
+    1008:	03010413          	addi	s0,sp,48      # 栈底（起始地址）
+    100c:	c22022f3          	csrr	t0,vlenb      # r5 = vlenb
     1010:	00028313          	mv	t1,t0           # r6 = r5
     1014:	40610133          	sub	sp,sp,t1        # r2 = r2 - r6 栈向下开一个向量变量的空间
     1018:	00400793          	li	a5,4            # r15 = 4
     101c:	fef43423          	sd	a5,-24(s0)      
-    1020:	c22027f3          	csrr	a5,vlenb    # r15 = vlenb
+    1020:	c22027f3          	csrr	a5,vlenb      # r15 = vlenb
     1024:	40f007b3          	neg	a5,a5           # r15 = -r15 = -vlenb
-    1028:	fe078793          	addi	a5,a5,-32   # r15 = r15 - 32 
-    102c:	ff078793          	addi	a5,a5,-16   # r15 = r15 - 16
+    1028:	fe078793          	addi	a5,a5,-32     # r15 = r15 - 32 
+    102c:	ff078793          	addi	a5,a5,-16     # r15 = r15 - 16
     1030:	008787b3          	add	a5,a5,s0        # r15 = r15 + r8    向量在栈上的地址
     1034:	00001737          	lui	a4,0x1          # r14 = 4096    (10000)
-    1038:	0a870713          	addi	a4,a4,168 # 10a8 <main+0xa8>    # r14 内存中数组地址
+    1038:	0a870713          	addi	a4,a4,168     # 10a8 <main+0xa8>    # r14 内存中数组地址
     103c:	00073683          	ld	a3,0(a4)        # 数组载入（32位，用64位标量寄存器转运，两次解决4个数据）
     1040:	00d7b023          	sd	a3,0(a5)
     1044:	00873703          	ld	a4,8(a4)
     1048:	00e7b423          	sd	a4,8(a5)
     104c:	c22027f3          	csrr	a5,vlenb
     1050:	40f007b3          	neg	a5,a5           # r15 = -r15 = -vlenb
-    1054:	ff078793          	addi	a5,a5,-16   # r15 = r15 - 16
-    1058:	ff078793          	addi	a5,a5,-16   # r15 = r15 - 16
+    1054:	ff078793          	addi	a5,a5,-16     # r15 = r15 - 16
+    1058:	ff078793          	addi	a5,a5,-16     # r15 = r15 - 16
     105c:	00878733          	add	a4,a5,s0        # r14 = r15 + r8
     1060:	c22027f3          	csrr	a5,vlenb
     1064:	40f007b3          	neg	a5,a5
@@ -45,7 +45,7 @@ Disassembly of section .text:
     106c:	ff078793          	addi	a5,a5,-16
     1070:	008786b3          	add	a3,a5,s0        # r13 向量在栈上的地址
     1074:	fe843783          	ld	a5,-24(s0)
-    1078:	0507f057          	vsetvli	zero,a5,e32,m1,ta,mu    # set config
+    1078:	0507f057          	vsetvli	zero,a5,e32,m1,ta,mu    # set config  32位数，lmul=1，不带mask
     107c:	0206ec07          	vle32.v	v24,(a3)                # load
     1080:	02870c27          	vs1r.v	v24,(a4)                # store
     1084:	00000793          	li	a5,0                        # return 0
@@ -54,7 +54,7 @@ Disassembly of section .text:
     1090:	00028313          	mv	t1,t0
     1094:	00610133          	add	sp,sp,t1      # 回收栈上向量的空间
     1098:	02813403          	ld	s0,40(sp)     # 返回地址
-    109c:	03010113          	addi	sp,sp,48  # 回收
+    109c:	03010113          	addi	sp,sp,48    # 回收
     10a0:	00008067          	ret
 
 Disassembly of section .rodata:

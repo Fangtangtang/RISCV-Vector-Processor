@@ -68,6 +68,9 @@ module SCALAR_ALU#(parameter ADDR_WIDTH = 17,
             `IMM:begin
                 result = imm;
             end
+            `VEC_MEM_ADDR:begin
+                result = rs1;
+            end
             default :
             $display("[ERROR]:unexpected alu instruction\n");
         endcase
