@@ -40,14 +40,14 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
     reg [DATA_LEN-1:0] read_data;
     assign mem_data = read_data;
     
-    wire [BYTE_SIZE-1:0] storage0Value = storage[130992];
-    wire [BYTE_SIZE-1:0] storage1Value = storage[130993];
-    wire [BYTE_SIZE-1:0] storage2Value = storage[130994];
-    wire [BYTE_SIZE-1:0] storage3Value = storage[130995];
-    wire [BYTE_SIZE-1:0] storage4Value = storage[130996];
-    wire [BYTE_SIZE-1:0] storage5Value = storage[130997];
-    wire [BYTE_SIZE-1:0] storage6Value = storage[130998];
-    wire [BYTE_SIZE-1:0] storage7Value = storage[130999];
+    wire [BYTE_SIZE-1:0] storage0Value = storage[131008];
+    wire [BYTE_SIZE-1:0] storage1Value = storage[131009];
+    wire [BYTE_SIZE-1:0] storage2Value = storage[131010];
+    wire [BYTE_SIZE-1:0] storage3Value = storage[131011];
+    wire [BYTE_SIZE-1:0] storage4Value = storage[131012];
+    wire [BYTE_SIZE-1:0] storage5Value = storage[131013];
+    wire [BYTE_SIZE-1:0] storage6Value = storage[131014];
+    wire [BYTE_SIZE-1:0] storage7Value = storage[131015];
 
     wire [BYTE_SIZE-1:0] storage8Value = storage[4264];
     wire [BYTE_SIZE-1:0] storage9Value = storage[4265];
@@ -60,7 +60,6 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
     
     
     always @(posedge clk) begin
-        // if (mem_status == `MEM_RESTING)begin
         case (mem_tast_type)
             `MEM_NOP:begin
                 mem_status <= `MEM_RESTING;
