@@ -275,7 +275,7 @@ module DATA_CACHE#(parameter ADDR_WIDTH = 17,
                             written_data_type <= requested_data_type;
                         end
                         default:
-                        $display("[ERROR]:unexpected task_type when cnt == 3 in data cache\n");
+                        $display("[ERROR]:unexpected task_type when cnt == 4 in data cache\n");
                     endcase
                 end
                 else begin

@@ -49,14 +49,14 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
     wire [BYTE_SIZE-1:0] storage6Value = storage[131014];
     wire [BYTE_SIZE-1:0] storage7Value = storage[131015];
 
-    wire [BYTE_SIZE-1:0] storage8Value = storage[4264];
-    wire [BYTE_SIZE-1:0] storage9Value = storage[4265];
-    wire [BYTE_SIZE-1:0] storage10Value = storage[4266];
-    wire [BYTE_SIZE-1:0] storage11Value = storage[4267];
-    wire [BYTE_SIZE-1:0] storage12Value = storage[4268];
-    wire [BYTE_SIZE-1:0] storage13Value = storage[4269];
-    wire [BYTE_SIZE-1:0] storage14Value = storage[4270];
-    wire [BYTE_SIZE-1:0] storage15Value = storage[4271];
+    wire [BYTE_SIZE-1:0] storage8Value = storage[131016];
+    wire [BYTE_SIZE-1:0] storage9Value = storage[131017];
+    wire [BYTE_SIZE-1:0] storage10Value = storage[131018];
+    wire [BYTE_SIZE-1:0] storage11Value = storage[131019];
+    wire [BYTE_SIZE-1:0] storage12Value = storage[131020];
+    wire [BYTE_SIZE-1:0] storage13Value = storage[131021];
+    wire [BYTE_SIZE-1:0] storage14Value = storage[131022];
+    wire [BYTE_SIZE-1:0] storage15Value = storage[131023];
     
     
     always @(posedge clk) begin
