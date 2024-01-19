@@ -70,7 +70,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
     assign S_type = opcode == 7'b0100011;
     assign B_type = opcode == 7'b1100011;
     assign U_type = opcode == 7'b0110111||opcode == 7'b0010111;
-    assign J_type = opcode == 7'b1101111&&(func_code[2:0] == 3'b000);
+    assign J_type = opcode == 7'b1101111;
     
     // IMMEDIATE
     wire sign_bit;
@@ -78,7 +78,7 @@ module DECODER#(parameter ADDR_WIDTH = 17,
     
     wire signed [SCALAR_REG_LEN-1:0] P_imm = {{59{1'b0}},instruction[19:15]};
     wire signed [SCALAR_REG_LEN-1:0] V_imm = {{59{instruction[19]}},instruction[19:15]};
-    wire signed [SCALAR_REG_LEN-1:0] R_imm = 0;
+    wire signed [SCALAR_REG_LEN-1:0] R_imm = {{59{instruction[24]}},instruction[24:20]};
     wire signed [SCALAR_REG_LEN-1:0] I_imm = {{52{sign_bit}}, instruction[31:20]};
     wire signed [SCALAR_REG_LEN-1:0] S_imm = {{52{sign_bit}}, instruction[31:25], instruction[11:7]};
     // B:在立即数中已经处理移位

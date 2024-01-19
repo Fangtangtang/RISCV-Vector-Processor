@@ -139,6 +139,8 @@
 // IMM
 `define     ADDI                    3'b000
 `define     SLTI                    3'b010
+`define     SLLI                    3'b001
+`define     SRLI                    3'b101
 
 // CSR读写
 `define     CSRRS                   3'b010

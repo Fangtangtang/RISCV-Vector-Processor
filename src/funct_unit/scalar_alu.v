@@ -45,6 +45,8 @@ module SCALAR_ALU#(parameter ADDR_WIDTH = 17,
                 case (func_code[2:0])
                     `ADDI:result = rs1 + imm;
                     `SLTI:result = rs1 < imm ? 1 : 0;
+                    `SLLI:result = rs1 << imm;
+                    `SRLI:result = rs1 >> imm;
                     default:
                     $display("[ERROR]:unexpected immediate binary instruction\n");
                 endcase

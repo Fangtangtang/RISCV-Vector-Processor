@@ -1,0 +1,215 @@
+
+/mnt/f/repo/RISCV-Vector-Processor/testspace/test.om:     file format elf64-littleriscv
+
+
+Disassembly of section .rom:
+
+0000000000000000 <.rom>:
+   0:	00020137          	lui	sp,0x20
+   4:	04c010ef          	jal	ra,1050 <main>
+   8:	0ff00513          	li	a0,255
+   c:	000306b7          	lui	a3,0x30
+  10:	00a68223          	sb	a0,4(a3) # 30004 <__heap_start+0x2e004>
+  14:	ff9ff06f          	j	c <vec_add_rvv-0xff4>
+
+Disassembly of section .text:
+
+0000000000001000 <vec_add_rvv>:
+    1000:	fd010113          	addi	sp,sp,-48 # 1ffd0 <__heap_start+0x1dfd0>
+    1004:	02813423          	sd	s0,40(sp)
+    1008:	03010413          	addi	s0,sp,48
+    100c:	fea43423          	sd	a0,-24(s0)
+    1010:	feb43023          	sd	a1,-32(s0)
+    1014:	fcc43c23          	sd	a2,-40(s0)
+    1018:	fcd43823          	sd	a3,-48(s0)
+    101c:	fe843783          	ld	a5,-24(s0)
+    1020:	0287ec87          	vl1re32.v	v25,(a5)
+    1024:	fe043783          	ld	a5,-32(s0)
+    1028:	0287ec07          	vl1re32.v	v24,(a5)
+    102c:	fd043783          	ld	a5,-48(s0)
+    1030:	0507f057          	vsetvli	zero,a5,e32,m1,ta,mu
+    1034:	039c0c57          	vadd.vv	v24,v25,v24
+    1038:	fd843783          	ld	a5,-40(s0)
+    103c:	02878c27          	vs1r.v	v24,(a5)
+    1040:	00000013          	nop
+    1044:	02813403          	ld	s0,40(sp)
+    1048:	03010113          	addi	sp,sp,48
+    104c:	00008067          	ret
+
+0000000000001050 <main>:
+    1050:	fc010113          	addi	sp,sp,-64
+    1054:	02113c23          	sd	ra,56(sp)
+    1058:	02813823          	sd	s0,48(sp)
+    105c:	04010413          	addi	s0,sp,64
+    1060:	c22022f3          	csrr	t0,vlenb
+    1064:	00229313          	slli	t1,t0,0x2
+    1068:	40530333          	sub	t1,t1,t0
+    106c:	40610133          	sub	sp,sp,t1
+    1070:	00400793          	li	a5,4
+    1074:	fef43423          	sd	a5,-24(s0)
+    1078:	000017b7          	lui	a5,0x1
+    107c:	17878793          	addi	a5,a5,376 # 1178 <main+0x128>
+    1080:	0007b703          	ld	a4,0(a5)
+    1084:	fce43c23          	sd	a4,-40(s0)
+    1088:	0087b783          	ld	a5,8(a5)
+    108c:	fef43023          	sd	a5,-32(s0)
+    1090:	000017b7          	lui	a5,0x1
+    1094:	18878793          	addi	a5,a5,392 # 1188 <main+0x138>
+    1098:	0007b703          	ld	a4,0(a5)
+    109c:	fce43423          	sd	a4,-56(s0)
+    10a0:	0087b783          	ld	a5,8(a5)
+    10a4:	fcf43823          	sd	a5,-48(s0)
+    10a8:	fd840713          	addi	a4,s0,-40
+    10ac:	fe843783          	ld	a5,-24(s0)
+    10b0:	0507f057          	vsetvli	zero,a5,e32,m1,ta,mu
+    10b4:	02076c07          	vle32.v	v24,(a4)
+    10b8:	c22027f3          	csrr	a5,vlenb
+    10bc:	40f007b3          	neg	a5,a5
+    10c0:	fd078793          	addi	a5,a5,-48
+    10c4:	ff078793          	addi	a5,a5,-16
+    10c8:	008787b3          	add	a5,a5,s0
+    10cc:	02878c27          	vs1r.v	v24,(a5)
+    10d0:	fc840713          	addi	a4,s0,-56
+    10d4:	fe843783          	ld	a5,-24(s0)
+    10d8:	02076c07          	vle32.v	v24,(a4)
+    10dc:	c22027f3          	csrr	a5,vlenb
+    10e0:	40f007b3          	neg	a5,a5
+    10e4:	00179793          	slli	a5,a5,0x1
+    10e8:	fd078793          	addi	a5,a5,-48
+    10ec:	ff078793          	addi	a5,a5,-16
+    10f0:	008787b3          	add	a5,a5,s0
+    10f4:	02878c27          	vs1r.v	v24,(a5)
+    10f8:	c2202773          	csrr	a4,vlenb
+    10fc:	00271793          	slli	a5,a4,0x2
+    1100:	40f707b3          	sub	a5,a4,a5
+    1104:	fd078793          	addi	a5,a5,-48
+    1108:	ff078793          	addi	a5,a5,-16
+    110c:	00878633          	add	a2,a5,s0
+    1110:	c22027f3          	csrr	a5,vlenb
+    1114:	40f007b3          	neg	a5,a5
+    1118:	00179793          	slli	a5,a5,0x1
+    111c:	fd078793          	addi	a5,a5,-48
+    1120:	ff078793          	addi	a5,a5,-16
+    1124:	00878733          	add	a4,a5,s0
+    1128:	c22027f3          	csrr	a5,vlenb
+    112c:	40f007b3          	neg	a5,a5
+    1130:	fd078793          	addi	a5,a5,-48
+    1134:	ff078793          	addi	a5,a5,-16
+    1138:	008787b3          	add	a5,a5,s0
+    113c:	fe843683          	ld	a3,-24(s0)
+    1140:	00070593          	mv	a1,a4
+    1144:	00078513          	mv	a0,a5
+    1148:	eb9ff0ef          	jal	ra,1000 <vec_add_rvv>
+    114c:	00000793          	li	a5,0
+    1150:	00078513          	mv	a0,a5
+    1154:	c22022f3          	csrr	t0,vlenb
+    1158:	00229313          	slli	t1,t0,0x2
+    115c:	40530333          	sub	t1,t1,t0
+    1160:	00610133          	add	sp,sp,t1
+    1164:	03813083          	ld	ra,56(sp)
+    1168:	03013403          	ld	s0,48(sp)
+    116c:	04010113          	addi	sp,sp,64
+    1170:	00008067          	ret
+
+Disassembly of section .rodata:
+
+0000000000001174 <__bss_end-0x24>:
+    1174:	0000                	vmsge.vx	v0,v0,zero,v0.t
+    1176:	0000                	vmsge.vx	v0,v0,zero,v0.t
+    1178:	0001                	vmsge.vx	v0,v0,zero,v0.t
+    117a:	0000                	vmsge.vx	v0,v0,zero,v0.t
+    117c:	0002                	vmsge.vx	v0,v0,zero,v0.t
+    117e:	0000                	vmsge.vx	v0,v0,zero,v0.t
+    1180:	00000003          	lb	zero,0(zero) # 0 <vec_add_rvv-0x1000>
+    1184:	0004                	.2byte	0x4
+    1186:	0000                	vmsge.vx	v0,v0,zero,v0.t
+    1188:	0005                	.2byte	0x5
+    118a:	0000                	vmsge.vx	v0,v0,zero,v0.t
+    118c:	0006                	.2byte	0x6
+    118e:	0000                	vmsge.vx	v0,v0,zero,v0.t
+    1190:	00000007          	vle8.v	v0,(zero),v0.t
+    1194:	0008                	.2byte	0x8
+	...
+
+Disassembly of section .riscv.attributes:
+
+0000000000000000 <.riscv.attributes>:
+   0:	8941                	vmsge.vx	v18,v0,ra,v0.t
+   2:	0000                	vmsge.vx	v0,v0,zero,v0.t
+   4:	7200                	vmsge.vx	v4,v0,zero,v0.t
+   6:	7369                	.2byte	0x7369
+   8:	01007663          	bgeu	zero,a6,14 <vec_add_rvv-0xfec>
+   c:	007f                	.2byte	0x7f
+   e:	0000                	vmsge.vx	v0,v0,zero,v0.t
+  10:	1004                	.2byte	0x1004
+  12:	7205                	.2byte	0x7205
+  14:	3676                	.2byte	0x3676
+  16:	6934                	.2byte	0x6934
+  18:	7032                	.2byte	0x7032
+  1a:	5f30                	.2byte	0x5f30
+  1c:	326d                	.2byte	0x326d
+  1e:	3070                	.2byte	0x3070
+  20:	615f 7032 5f30      	.byte	0x5f, 0x61, 0x32, 0x70, 0x30, 0x5f
+  26:	3266                	.2byte	0x3266
+  28:	3070                	.2byte	0x3070
+  2a:	645f 7032 5f30      	.byte	0x5f, 0x64, 0x32, 0x70, 0x30, 0x5f
+  30:	3176                	.2byte	0x3176
+  32:	3070                	.2byte	0x3070
+  34:	7a5f 6576 3233      	.byte	0x5f, 0x7a, 0x76, 0x65, 0x33, 0x32
+  3a:	3166                	.2byte	0x3166
+  3c:	3070                	.2byte	0x3070
+  3e:	7a5f 6576 3233      	.byte	0x5f, 0x7a, 0x76, 0x65, 0x33, 0x32
+  44:	3178                	.2byte	0x3178
+  46:	3070                	.2byte	0x3070
+  48:	7a5f 6576 3436      	.byte	0x5f, 0x7a, 0x76, 0x65, 0x36, 0x34
+  4e:	3164                	.2byte	0x3164
+  50:	3070                	.2byte	0x3070
+  52:	7a5f 6576 3436      	.byte	0x5f, 0x7a, 0x76, 0x65, 0x36, 0x34
+  58:	3166                	.2byte	0x3166
+  5a:	3070                	.2byte	0x3070
+  5c:	7a5f 6576 3436      	.byte	0x5f, 0x7a, 0x76, 0x65, 0x36, 0x34
+  62:	3178                	.2byte	0x3178
+  64:	3070                	.2byte	0x3070
+  66:	7a5f 6c76 3231      	.byte	0x5f, 0x7a, 0x76, 0x6c, 0x31, 0x32
+  6c:	6238                	.2byte	0x6238
+  6e:	7031                	.2byte	0x7031
+  70:	5f30                	.2byte	0x5f30
+  72:	767a                	.2byte	0x767a
+  74:	336c                	.2byte	0x336c
+  76:	6232                	.2byte	0x6232
+  78:	7031                	.2byte	0x7031
+  7a:	5f30                	.2byte	0x5f30
+  7c:	767a                	.2byte	0x767a
+  7e:	366c                	.2byte	0x366c
+  80:	6234                	.2byte	0x6234
+  82:	7031                	.2byte	0x7031
+  84:	0030                	.2byte	0x30
+  86:	0108                	.2byte	0x108
+  88:	0b0a                	.2byte	0xb0a
+
+Disassembly of section .comment:
+
+0000000000000000 <.comment>:
+   0:	3a434347          	fmsub.d	ft6,ft6,ft4,ft7,rmm
+   4:	2820                	vmsge.vx	v16,v0,zero,v0.t
+   6:	64323467          	.4byte	0x64323467
+   a:	3366                	.2byte	0x3366
+   c:	3634                	.2byte	0x3634
+   e:	3434                	.2byte	0x3434
+  10:	3336                	.2byte	0x3336
+  12:	2029                	.2byte	0x2029
+  14:	3231                	.2byte	0x3231
+  16:	302e                	.2byte	0x302e
+  18:	312e                	.2byte	0x312e
+  1a:	3220                	vmsge.vx	v4,v0,zero,v0.t
+  1c:	3230                	.2byte	0x3230
+  1e:	3032                	.2byte	0x3032
+  20:	3035                	.2byte	0x3035
+  22:	2035                	.2byte	0x2035
+  24:	7028                	.2byte	0x7028
+  26:	6572                	.2byte	0x6572
+  28:	6572                	.2byte	0x6572
+  2a:	656c                	.2byte	0x656c
+  2c:	7361                	vmsge.vx	v6,v0,zero,v0.t
+  2e:	2965                	.2byte	0x2965
+	...
