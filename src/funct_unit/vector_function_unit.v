@@ -18,7 +18,7 @@
 `include "src/defines.v"
 `include "src/funct_unit/vector_alu.v"
 
-module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 17,
+module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 20,
                              parameter DATA_LEN = 32,                    // 内存数据单元
                              parameter SCALAR_REG_LEN = 64,              // 标量寄存器
                              parameter LONGEST_LEN = 64,                 // 标量寄存器

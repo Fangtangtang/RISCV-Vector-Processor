@@ -8,7 +8,7 @@
 // #############################################################################################################################
 `include"src/defines.v"
 
-module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 17,
+module INSTRUCTION_CACHE#(parameter ADDR_WIDTH = 20,
                           parameter DATA_LEN = 32,
                           parameter BYTE_SIZE = 8,
                           parameter I_CACHE_SIZE = 2,

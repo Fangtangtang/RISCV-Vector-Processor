@@ -50,7 +50,7 @@ module top#(parameter SIM = 0,
     
     wire core_rdy = 1;
     
-    localparam ADDR_WIDTH       = 17;
+    localparam ADDR_WIDTH       = 20;
     localparam BYTE_SIZE        = 8;
     localparam VECTOR_SIZE      = 8;
     localparam ENTRY_INDEX_SIZE = 3;

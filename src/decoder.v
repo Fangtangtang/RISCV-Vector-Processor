@@ -5,7 +5,7 @@
 // #############################################################################################################################
 `include "src/defines.v"
 
-module DECODER#(parameter ADDR_WIDTH = 17,
+module DECODER#(parameter ADDR_WIDTH = 20,
                 parameter DATA_LEN = 32,
                 parameter SCALAR_REG_LEN = 64,                     // 标量寄存器
                 parameter BYTE_SIZE = 8,

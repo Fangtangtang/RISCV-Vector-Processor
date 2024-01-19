@@ -15,7 +15,7 @@
 // #############################################################################################################################
 `include"src/defines.v"
 
-module DATA_CACHE#(parameter ADDR_WIDTH = 17,
+module DATA_CACHE#(parameter ADDR_WIDTH = 20,
                    parameter DATA_LEN = 32,
                    parameter BYTE_SIZE = 8,
                    parameter VECTOR_SIZE = 8,

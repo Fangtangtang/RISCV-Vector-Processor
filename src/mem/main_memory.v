@@ -7,7 +7,7 @@
 // #############################################################################################################################
 `include"src/defines.v"
 
-module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
+module MAIN_MEMORY#(parameter ADDR_WIDTH = 20,
                     parameter DATA_LEN = 32,
                     parameter BYTE_SIZE = 8,
                     parameter VECTOR_SIZE = 8,
@@ -40,23 +40,23 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 17,
     reg [DATA_LEN-1:0] read_data;
     assign mem_data = read_data;
     
-    wire [BYTE_SIZE-1:0] storage0Value = storage[131008];
-    wire [BYTE_SIZE-1:0] storage1Value = storage[131009];
-    wire [BYTE_SIZE-1:0] storage2Value = storage[131010];
-    wire [BYTE_SIZE-1:0] storage3Value = storage[131011];
-    wire [BYTE_SIZE-1:0] storage4Value = storage[131012];
-    wire [BYTE_SIZE-1:0] storage5Value = storage[131013];
-    wire [BYTE_SIZE-1:0] storage6Value = storage[131014];
-    wire [BYTE_SIZE-1:0] storage7Value = storage[131015];
+    wire [BYTE_SIZE-1:0] storage0Value = storage[130888];
+    wire [BYTE_SIZE-1:0] storage1Value = storage[130889];
+    wire [BYTE_SIZE-1:0] storage2Value = storage[130890];
+    wire [BYTE_SIZE-1:0] storage3Value = storage[130891];
+    wire [BYTE_SIZE-1:0] storage4Value = storage[130892];
+    wire [BYTE_SIZE-1:0] storage5Value = storage[130893];
+    wire [BYTE_SIZE-1:0] storage6Value = storage[130894];
+    wire [BYTE_SIZE-1:0] storage7Value = storage[130895];
 
-    wire [BYTE_SIZE-1:0] storage8Value = storage[4168];
-    wire [BYTE_SIZE-1:0] storage9Value = storage[4169];
-    wire [BYTE_SIZE-1:0] storage10Value = storage[4170];
-    wire [BYTE_SIZE-1:0] storage11Value = storage[4171];
-    wire [BYTE_SIZE-1:0] storage12Value = storage[4172];
-    wire [BYTE_SIZE-1:0] storage13Value = storage[4173];
-    wire [BYTE_SIZE-1:0] storage14Value = storage[4174];
-    wire [BYTE_SIZE-1:0] storage15Value = storage[4175];
+    wire [BYTE_SIZE-1:0] storage8Value = storage[130880];
+    wire [BYTE_SIZE-1:0] storage9Value = storage[130881];
+    wire [BYTE_SIZE-1:0] storage10Value = storage[130882];
+    wire [BYTE_SIZE-1:0] storage11Value = storage[130883];
+    wire [BYTE_SIZE-1:0] storage12Value = storage[130884];
+    wire [BYTE_SIZE-1:0] storage13Value = storage[130885];
+    wire [BYTE_SIZE-1:0] storage14Value = storage[130886];
+    wire [BYTE_SIZE-1:0] storage15Value = storage[130887];
     
     
     always @(posedge clk) begin

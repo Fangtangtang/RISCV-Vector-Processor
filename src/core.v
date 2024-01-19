@@ -24,7 +24,7 @@
 `include"src/reg/vector_register_file.v"
 
 
-module CORE#(parameter ADDR_WIDTH = 17,
+module CORE#(parameter ADDR_WIDTH = 20,
              parameter DATA_LEN = 32,                                 // 内存数据单元
              parameter SCALAR_REG_LEN = 64,                           // 标量寄存器
              parameter BYTE_SIZE = 8,
