@@ -41,7 +41,7 @@ module testbench();
         $dumpfile("test.vcd");
         $dumpvars(0, testbench);
         $dumpall;
-        #5000 $finish;
+        #3000 $finish;
     end
     
 endmodule

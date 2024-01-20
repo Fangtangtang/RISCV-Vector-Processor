@@ -189,6 +189,11 @@
 `define     WHOLE_REG               2'b10
 `define     MASK                    2'b11
 
+// Set Config
+`define     FROM_RS1                2'b00
+`define     FROM_VLMAX              2'b01
+`define     NOT_CHANGE              2'b10
+
 // BRANCH
 // ----------------------------------------------------------
 `define     NOT_BRANCH              2'b00
@@ -199,10 +204,13 @@
 // WB 写寄存器
 // ----------------------------------------------------------
 `define     WB_NOP                  3'b000
-`define     MEM_TO_REG              3'b001
-`define     ARITH                   3'b010
+`define     SCALAR_MEM_TO_REG       3'b001
+`define     SCALAR_ARITH            3'b010
 `define     INCREASED_PC            3'b011
 `define     CSR_TO_REG              3'b100
+`define     VECTOR_MEM_TO_REG       3'b101
+`define     VECTOR_ARITH            3'b110
+`define     VECTOR_SET_CONFIG       3'b111
 
 // ENCODING
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

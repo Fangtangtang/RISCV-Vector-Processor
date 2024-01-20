@@ -69,10 +69,19 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 20,
         assign _written_vector_data_slices[i] = _written_vector_data[BYTE_SIZE*(i+1)-1:BYTE_SIZE*i];
     end
     
+    wire _written_vector_data_tiny_slices [0:DATA_LEN*VECTOR_SIZE-1];
+    
+    for (i = 0;i<DATA_LEN*VECTOR_SIZE;i = i+1) begin
+        assign _written_vector_data_tiny_slices[i] = _written_vector_data[i];
+    end
+    
     reg [DATA_LEN-1:0] written_data1;
     reg [DATA_LEN-1:0] written_data2; // 8byte 分两次存
     always @(*) begin
         case(requested_data_type)
+            `ONE_BIT:begin
+                written_data1 = {31'b0,_written_vector_data_tiny_slices[current_length]};
+            end
             `ONE_BYTE:begin
                 written_data1 = {24'b0,_written_vector_data_slices[current_length]};
             end
@@ -92,12 +101,19 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 20,
     end
     
     wire [DATA_LEN*VECTOR_SIZE-1:0]   load_vector_data; // 存要读取的vector
-    assign vector_data = load_vector_data;
     reg [BYTE_SIZE-1:0] load_vector_data_slices [0:DATA_LEN*VECTOR_SIZE/BYTE_SIZE-1];
-    
     for (i = 0;i<DATA_LEN*VECTOR_SIZE/BYTE_SIZE;i = i+1) begin
         assign load_vector_data[(i+1)*8 - 1 : i*8] = load_vector_data_slices[i];
     end
+    
+    wire [DATA_LEN*VECTOR_SIZE-1:0]   load_vector_mask; // 存要读取的mask vector
+    reg [BYTE_SIZE-1:0] load_vector_mask_slices [0:DATA_LEN*VECTOR_SIZE-1];
+    for (i = 0;i<DATA_LEN*VECTOR_SIZE;i = i+1) begin
+        assign load_vector_mask[i] = load_vector_mask_slices[i];
+    end
+    
+    assign vector_data = (requested_data_type == `ONE_BIT) ? load_vector_mask:load_vector_data;
+    
     
     wire [BYTE_SIZE-1:0] storage0Value  = load_vector_data_slices[0];
     wire [BYTE_SIZE-1:0] storage1Value  = load_vector_data_slices[1];
@@ -116,7 +132,7 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 20,
     wire [BYTE_SIZE-1:0] storage14Value = load_vector_data_slices[14];
     wire [BYTE_SIZE-1:0] storage15Value = load_vector_data_slices[15];
     
-    assign d_cache_data_type = requested_data_type;
+    assign d_cache_data_type = (requested_data_type == `ONE_BIT) ? `ONE_BYTE:requested_data_type;
     
     always @(posedge clk) begin
         case (CNT)
@@ -234,10 +250,13 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 20,
             1:begin
                 case (task_type)
                     `MEM_CTR_LOAD:begin
-                        // todo:mask?
                         if (d_cache_status == `L_S_FINISHED) begin
                             if (visit_vector) begin
                                 case(requested_data_type)
+                                    `ONE_BIT:begin
+                                        load_vector_mask_slices[current_length] <= mem_data[0];
+                                        current_addr                            <= current_addr+1;
+                                    end
                                     `ONE_BYTE:begin
                                         load_vector_data_slices[current_length] <= mem_data[7:0];
                                         current_addr                            <= current_addr+1;
@@ -311,7 +330,8 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 20,
                                     `EIGHT_BYTE:current_addr <= current_addr+4;
                                     `FOUR_BYTE:current_addr  <= current_addr+4;
                                     `TWO_BYTE:current_addr   <= current_addr+2;
-                                    `ONE_BYTE:current_addr   <= current_addr+4;
+                                    `ONE_BYTE:current_addr   <= current_addr+1;
+                                    `ONE_BIT:current_addr    <= current_addr+1;
                                     default:
                                     $display("[ERROR]:unexpected data type when cnt == 1 in memory controller\n");
                                 endcase

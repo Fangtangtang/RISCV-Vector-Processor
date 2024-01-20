@@ -31,7 +31,7 @@ build_sim:
 build_sim_test: _no_testcase_name_check
 	@$(rvv_bin)/riscv64-unknown-linux-gnu-as -o $(sys)/rom.o -march=rv64gv -mabi=lp64  $(sys)/rom.s
 	@cp $(testcase)/*$(name)*.c $(testspace)/test.c
-	@$(rvv_bin)/riscv64-unknown-linux-gnu-gcc -o $(testspace)/test.o -I $(sys) -c $(testspace)/test.c -march=rv64gv  -mabi=lp64 -Wall
+	@$(rvv_bin)/riscv64-unknown-linux-gnu-gcc -o $(testspace)/test.o -I $(sys) -c $(testspace)/test.c -march=rv64gv -mabi=lp64 -Wall
 	@$(rvv_bin)/riscv64-unknown-linux-gnu-ld -T $(sys)/memory.ld $(sys)/rom.o $(testspace)/test.o -L $(rvv_toolchain)/riscv64-unknown-linux-gnu/lib/ -L $(rvv_toolchain)/lib/gcc/riscv64-unknown-linux-gnu/12.0.1/  -lgcc  -o $(testspace)/test.om
 	@$(rvv_bin)/riscv64-unknown-linux-gnu-objcopy -O verilog $(testspace)/test.om $(testspace)/test.data
 	@$(rvv_bin)/riscv64-unknown-linux-gnu-objdump -D $(testspace)/test.om > $(testspace)/test.dump

@@ -43,9 +43,9 @@ Disassembly of section .text:
     1064:	00878633          	add	a2,a5,s0
     1068:	fe843783          	ld	a5,-24(s0)                  # load/store mask会压缩8bits为1bits 容许8个register被归为一组
     106c:	0467f057          	vsetvli	zero,a5,e8,mf4,ta,mu    # set config  8位数，不带mask，4groups 每组8个
-    1070:	02b60c07          	vlm.v	v24,(a2)    # transfer mask from memory to v24
+    1070:	02b60c07          	vlm.v	v24,(a2)    # transfer mask from memory to v24(mask transfered to one register regardless of lmul)
     1074:	046077d7          	vsetvli	a5,zero,e8,mf4,ta,mu
-    1078:	02b70c27          	vsm.v	v24,(a4)    # transfer mask from v24 to memory
+    1078:	02b70c27          	vsm.v	v24,(a4)    # transfer mask from v24 to memory (r14)
     107c:	00000793          	li	a5,0
     1080:	00078513          	mv	a0,a5
     1084:	c22022f3          	csrr	t0,vlenb

@@ -5,7 +5,7 @@
 // 
 // 访问场景：
 // - instruction decode阶段读取数据
-// - write back阶段向rd写
+// - write back阶段向rd写(zero恒为0)
 // #############################################################################################################################
 `include"src/defines.v"
 
@@ -88,7 +88,7 @@ module SCALAR_REGISTER_FILE#(parameter ADDR_WIDTH = 17,
             rs2_index = rs2;
             // 写
             if (write_back_enabled)begin
-                if (rf_signal == `SCALAR_RF_WRITE) begin
+                if (rf_signal == `SCALAR_RF_WRITE&&(!rd == 0)) begin
                     register[rd] <= data;
                 end
                 status <= `RF_FINISHED;

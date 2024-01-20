@@ -167,6 +167,7 @@ vwadd.vv vd, vs2, vs1, vm # vector-vector
 符号位拓展
 
 2*SEW = SEW - SEW
+
 ```
 vwsub.vv vd, vs2, vs1, vm # vector-vector
 ```
@@ -327,9 +328,11 @@ vs2r.v	v24,(a2)
 
 #### Configure Setting
 
-rd可以认为是VL？
-
-AVL:application vector length
+- AVL:application vector length
+  - rs1!=0:Set vl to value in rs1
+  - rs1=0,rd!=0:Set vl to VLMAX
+  - rs1=0,rd=0:Keep existing vl (vtype may change)
+- rd: write new vl to rd.(write zero will be ignored)
 
 ```
  vsetvli rd, rs1, vtypei # rd = new vl, rs1 = AVL, vtypei = new vtype setting

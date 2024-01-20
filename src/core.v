@@ -60,7 +60,8 @@ module CORE#(parameter ADDR_WIDTH = 20,
     // Control and Status Register
     
     // vl:vector length
-    reg [31:0] VL = 0;
+    reg [31:0] VL     = 0;
+    localparam  VLMAX = VECTOR_SIZE; // todo:暂时使用，不严格
     
     // vlenb:`VLEN`/8 (vector register length in bytes), read only
     reg [31:0] VLENB = DATA_LEN*VECTOR_SIZE/BYTE_SIZE;
@@ -174,7 +175,7 @@ module CORE#(parameter ADDR_WIDTH = 20,
     assign mem_write_vector_data = EXE_MEM_VS3;
     assign vector_length         = EXE_MEM_VL;
     assign is_vector             = EXE_MEM_IS_VEC_INST;
-    assign data_type             = EXE_MEM_IS_VEC_INST? EXE_MEM_VSEW : EXE_MEM_MEM_VIS_DATA_SIZE;
+    assign data_type             = (EXE_MEM_MEM_VIS_DATA_SIZE == `ONE_BIT)?EXE_MEM_MEM_VIS_DATA_SIZE: EXE_MEM_IS_VEC_INST? EXE_MEM_VSEW : EXE_MEM_MEM_VIS_DATA_SIZE;
     
     
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -459,13 +460,26 @@ module CORE#(parameter ADDR_WIDTH = 20,
                 ID_EXE_VS3  <= vector_rf_rs3_data;
                 
                 ID_EXE_VM    <= decoder_vm;
-                ID_EXE_VL    <= VL;
                 ID_EXE_VTYPE <= VTYPE;
                 
                 // set configuration
                 if (decoder_output_exe_signal == `SET_CFG) begin
-                    VL         <= scalar_rf_rs1_data[31:0]; // todo: longer VL?
+                    if (!decoder_reg1_index == 0) begin
+                        ID_EXE_VL <= scalar_rf_rs1_data[31:0];
+                        VL        <= scalar_rf_rs1_data[31:0]; // todo: longer VL?
+                    end
+                    else if (!MEM_WB_RD_INDEX == 0) begin
+                        ID_EXE_VL <= VLMAX;
+                        VL        <= VLMAX; // todo: longer VL?
+                    end
+                    else begin
+                        ID_EXE_VL <= VL;
+                        VL        <= VL;
+                    end
                     VTYPE[7:0] <= {decoder_zimm[6],decoder_zimm[7],decoder_zimm[5:0]};
+                end
+                else begin
+                    ID_EXE_VL <= VL;
                 end
                 
                 ID_EXE_IMM              <= decoder_output_immediate;
@@ -716,11 +730,11 @@ module CORE#(parameter ADDR_WIDTH = 20,
     
     always @(*) begin
         case (MEM_WB_WB_SIGNAL)
-            `MEM_TO_REG:begin
+            `SCALAR_MEM_TO_REG:begin
                 scalar_rf_reg_write_data = MEM_WB_MEM_SCALAR_DATA;
                 scalar_rb_flag           = 1;
             end
-            `ARITH:begin
+            `SCALAR_ARITH:begin
                 scalar_rf_reg_write_data = MEM_WB_SCALAR_RESULT;
                 scalar_rb_flag           = 1;
             end
@@ -730,6 +744,10 @@ module CORE#(parameter ADDR_WIDTH = 20,
             end
             `CSR_TO_REG:begin
                 scalar_rf_reg_write_data = MEM_WB_CSR;
+                scalar_rb_flag           = 1;
+            end
+            `VECTOR_SET_CONFIG:begin
+                scalar_rf_reg_write_data = MEM_WB_VL;
                 scalar_rb_flag           = 1;
             end
             `WB_NOP:begin
@@ -743,11 +761,11 @@ module CORE#(parameter ADDR_WIDTH = 20,
     
     always @(*) begin
         case (MEM_WB_WB_SIGNAL)
-            `MEM_TO_REG:begin
+            `VECTOR_MEM_TO_REG:begin
                 vector_rf_reg_write_data = MEM_WB_MEM_VECTOR_DATA;
                 vector_rb_flag           = 1;
             end
-            `ARITH:begin
+            `VECTOR_ARITH:begin
                 vector_rf_reg_write_data = MEM_WB_VECTOR_RESULT;
                 vector_rb_flag           = 1;
             end

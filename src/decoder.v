@@ -161,7 +161,7 @@ module DECODER#(parameter ADDR_WIDTH = 20,
                             $display("[ERROR]:unexpected lumop in VL instruction\n");
                         endcase
                         branch_signal = `NOT_BRANCH;
-                        wb_signal     = `MEM_TO_REG;
+                        wb_signal     = `VECTOR_MEM_TO_REG;
                     end
                     // vector store
                     `VS:begin
@@ -206,32 +206,37 @@ module DECODER#(parameter ADDR_WIDTH = 20,
                         data_size       = `NOT_ACCESS;
                         vector_l_s_type = `NOT_ACCESS;
                         branch_signal   = `NOT_BRANCH;
-                        wb_signal       = `ARITH;
                         case (func3)
                             `OPIVV:begin // integer vec-vec
                                 exe_signal       = `BINARY;
                                 vec_operand_type = `VEC_VEC;
+                                wb_signal        = `VECTOR_ARITH;
                             end
                             `OPMVV:begin // mask vec-vec
                                 exe_signal       = `BINARY;
                                 vec_operand_type = `VEC_VEC;
+                                wb_signal        = `VECTOR_ARITH;
                             end
                             `OPIVI:begin // integer vec-imm
                                 exe_signal       = `IMM_BINARY;
                                 vec_operand_type = `VEC_IMM;
+                                wb_signal        = `VECTOR_ARITH;
                             end
                             `OPIVX:begin // integer vec-scalar
                                 exe_signal       = `BINARY;
                                 vec_operand_type = `VEC_SCALAR;
+                                wb_signal        = `VECTOR_ARITH;
                             end
                             `OPMVX:begin // mask vec-scalar
                                 exe_signal       = `BINARY;
                                 vec_operand_type = `VEC_SCALAR;
+                                wb_signal        = `VECTOR_ARITH;
                             end
                             // configuration setting
                             `OPCFG:begin
                                 exe_signal       = `SET_CFG;
                                 vec_operand_type = `NOT_VEC_ARITH;
+                                wb_signal        = `VECTOR_SET_CONFIG;
                             end
                             default:
                             $display("[ERROR]:unexpected func3 in VA/VCFG instruction\n");
@@ -251,14 +256,14 @@ module DECODER#(parameter ADDR_WIDTH = 20,
                         mem_vis_signal = `MEM_CTR_NOP;
                         data_size      = `NOT_ACCESS;
                         branch_signal  = `NOT_BRANCH;
-                        wb_signal      = `ARITH;
+                        wb_signal      = `SCALAR_ARITH;
                     end
                     7'b0010011: begin
                         exe_signal     = `IMM_BINARY;
                         mem_vis_signal = `MEM_CTR_NOP;
                         data_size      = `NOT_ACCESS;
                         branch_signal  = `NOT_BRANCH;
-                        wb_signal      = `ARITH;
+                        wb_signal      = `SCALAR_ARITH;
                     end
                     // addw
                     7'b0111011:begin
@@ -266,7 +271,7 @@ module DECODER#(parameter ADDR_WIDTH = 20,
                         mem_vis_signal = `MEM_CTR_NOP;
                         data_size      = `NOT_ACCESS;
                         branch_signal  = `NOT_BRANCH;
-                        wb_signal      = `ARITH;
+                        wb_signal      = `SCALAR_ARITH;
                     end
                     default:
                     $display("[ERROR]:unexpected R type instruction\n");
@@ -282,7 +287,7 @@ module DECODER#(parameter ADDR_WIDTH = 20,
                         mem_vis_signal = `MEM_CTR_NOP;
                         data_size      = `NOT_ACCESS;
                         branch_signal  = `NOT_BRANCH;
-                        wb_signal      = `ARITH;
+                        wb_signal      = `SCALAR_ARITH;
                     end
                     // addiw
                     7'b0011011:begin
@@ -290,14 +295,14 @@ module DECODER#(parameter ADDR_WIDTH = 20,
                         mem_vis_signal = `MEM_CTR_NOP;
                         data_size      = `NOT_ACCESS;
                         branch_signal  = `NOT_BRANCH;
-                        wb_signal      = `ARITH;
+                        wb_signal      = `SCALAR_ARITH;
                     end
                     // load
                     7'b0000011:begin
                         exe_signal     = `MEM_ADDR;
                         mem_vis_signal = `MEM_CTR_LOAD;
                         branch_signal  = `NOT_BRANCH;
-                        wb_signal      = `MEM_TO_REG;
+                        wb_signal      = `SCALAR_MEM_TO_REG;
                         case (func_code[2:0])
                             3'b000:data_size = `ONE_BYTE;
                             3'b001:data_size = `TWO_BYTE;
@@ -356,14 +361,14 @@ module DECODER#(parameter ADDR_WIDTH = 20,
                         mem_vis_signal = `MEM_CTR_NOP;
                         data_size      = `NOT_ACCESS;
                         branch_signal  = `NOT_BRANCH;
-                        wb_signal      = `ARITH;
+                        wb_signal      = `SCALAR_ARITH;
                     end
                     7'b0010111:begin
                         exe_signal     = `PC_BASED;
                         mem_vis_signal = `MEM_CTR_NOP;
                         data_size      = `NOT_ACCESS;
                         branch_signal  = `NOT_BRANCH;
-                        wb_signal      = `ARITH;
+                        wb_signal      = `SCALAR_ARITH;
                     end
                     default:
                     $display("[ERROR]:unexpected U type instruction\n");

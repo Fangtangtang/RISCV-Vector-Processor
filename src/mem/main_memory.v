@@ -40,23 +40,23 @@ module MAIN_MEMORY#(parameter ADDR_WIDTH = 20,
     reg [DATA_LEN-1:0] read_data;
     assign mem_data = read_data;
     
-    wire [BYTE_SIZE-1:0] storage0Value = storage[130888];
-    wire [BYTE_SIZE-1:0] storage1Value = storage[130889];
-    wire [BYTE_SIZE-1:0] storage2Value = storage[130890];
-    wire [BYTE_SIZE-1:0] storage3Value = storage[130891];
-    wire [BYTE_SIZE-1:0] storage4Value = storage[130892];
-    wire [BYTE_SIZE-1:0] storage5Value = storage[130893];
-    wire [BYTE_SIZE-1:0] storage6Value = storage[130894];
-    wire [BYTE_SIZE-1:0] storage7Value = storage[130895];
+    wire [BYTE_SIZE-1:0] storage0Value = storage[131016];
+    wire [BYTE_SIZE-1:0] storage1Value = storage[131017];
+    wire [BYTE_SIZE-1:0] storage2Value = storage[131018];
+    wire [BYTE_SIZE-1:0] storage3Value = storage[131019];
+    wire [BYTE_SIZE-1:0] storage4Value = storage[131020];
+    wire [BYTE_SIZE-1:0] storage5Value = storage[131021];
+    wire [BYTE_SIZE-1:0] storage6Value = storage[131022];
+    wire [BYTE_SIZE-1:0] storage7Value = storage[131023];
 
-    wire [BYTE_SIZE-1:0] storage8Value = storage[130880];
-    wire [BYTE_SIZE-1:0] storage9Value = storage[130881];
-    wire [BYTE_SIZE-1:0] storage10Value = storage[130882];
-    wire [BYTE_SIZE-1:0] storage11Value = storage[130883];
-    wire [BYTE_SIZE-1:0] storage12Value = storage[130884];
-    wire [BYTE_SIZE-1:0] storage13Value = storage[130885];
-    wire [BYTE_SIZE-1:0] storage14Value = storage[130886];
-    wire [BYTE_SIZE-1:0] storage15Value = storage[130887];
+    wire [BYTE_SIZE-1:0] storage8Value = storage[262064];
+    wire [BYTE_SIZE-1:0] storage9Value = storage[262065];
+    wire [BYTE_SIZE-1:0] storage10Value = storage[262066];
+    wire [BYTE_SIZE-1:0] storage11Value = storage[262067];
+    wire [BYTE_SIZE-1:0] storage12Value = storage[262068];
+    wire [BYTE_SIZE-1:0] storage13Value = storage[262069];
+    wire [BYTE_SIZE-1:0] storage14Value = storage[262070];
+    wire [BYTE_SIZE-1:0] storage15Value = storage[262071];
     
     
     always @(posedge clk) begin
