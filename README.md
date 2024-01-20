@@ -296,7 +296,16 @@ vl2re32.v	v24,(a0)
 - vm:specifies whether vector masking is enabled (0 = mask enabled, 1 = mask disabled)
 - lumop:additional fields encoding variants of unit-stride instructions
 
+###### Vector unit-stride mask load
 
+```tex
+# Vector unit-stride mask load
+ vlm.v vd, (rs1) # Load byte vector of length ceil(vl/8)
+```
+
+transfer mask values from memory.
+
+similarly to unmasked byte loads(EEW=8), except that the effective vector length is evl=ceil(vl/8) (i.e. EMUL=1), and the destination register is always written with a tail-agnostic policy
 
 #### Vector Store
 ```
@@ -355,6 +364,7 @@ LMUL=2^(vlmul[2:0])
  m8     # LMUL=8
 ```
 ### 特权
+
 #### CSR
 control and status registers，反映和控制 CPU 当前的状态和执行机制。
 
