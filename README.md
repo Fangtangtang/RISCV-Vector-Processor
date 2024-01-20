@@ -291,9 +291,15 @@ vl2re32.v	v24,(a0)
 | 001|  0| 00|  1|   01000       |    01010    | 110 |   11000     | 0000111 | vl2re32.v
 ```
 - nf:specifies the number of fields in each segment, for segment load/stores (001:2)
+
+  For regular vector loads and stores, nf=0, indicating that a single value is moved between a vector register group and memory at each element position.
+
 - mew:extended memory element width.     
+
 - mop:specifies memory addressing mode
+
 - vm:specifies whether vector masking is enabled (0 = mask enabled, 1 = mask disabled)
+
 - lumop:additional fields encoding variants of unit-stride instructions
 
 ###### Vector unit-stride mask load

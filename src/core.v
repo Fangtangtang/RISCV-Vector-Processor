@@ -105,7 +105,7 @@ module CORE#(parameter ADDR_WIDTH = 20,
     reg                             ID_EXE_IS_VEC_INST;
     reg [3:0]                       ID_EXE_ALU_SIGNAL;        // ALU信号
     reg [1:0]                       ID_EXE_MEM_VIS_SIGNAL;    // 访存信号
-    reg [2:0]                       ID_EXE_MEM_VIS_DATA_SIZE; // todo:scalar?
+    reg [2:0]                       ID_EXE_MEM_VIS_DATA_SIZE;
     reg [1:0]                       ID_EXE_BRANCH_SIGNAL;
     reg [2:0]                       ID_EXE_WB_SIGNAL;
     
@@ -355,6 +355,7 @@ module CORE#(parameter ADDR_WIDTH = 20,
     wire                        vector_function_unit_execute;
     assign vector_function_unit_execute = ID_EXE_IS_VEC_INST&&EXE_STATE_CTR;
     // outports wire
+    // result write back as mask or not
     wire                       	        vector_function_unit_is_mask;
     wire [VECTOR_SIZE*DATA_LEN-1:0] 	vector_function_unit_result;
     wire [1:0]                 	        vector_function_unit_vector_alu_status;
@@ -474,12 +475,17 @@ module CORE#(parameter ADDR_WIDTH = 20,
                 ID_EXE_EXT_TYPE         <= decoder_reg1_index;
                 ID_EXE_FUNCT6           <= decoder_output_func6;
                 
-                ID_EXE_IS_VEC_INST       <= decoder_is_vector_instruction;
-                ID_EXE_ALU_SIGNAL        <= decoder_output_exe_signal;
-                ID_EXE_MEM_VIS_SIGNAL    <= decoder_output_mem_vis_signal;
-                ID_EXE_MEM_VIS_DATA_SIZE <= decoder_output_data_size;
-                ID_EXE_BRANCH_SIGNAL     <= decoder_output_branch_signal;
-                ID_EXE_WB_SIGNAL         <= decoder_output_wb_signal;
+                ID_EXE_IS_VEC_INST    <= decoder_is_vector_instruction;
+                ID_EXE_ALU_SIGNAL     <= decoder_output_exe_signal;
+                ID_EXE_MEM_VIS_SIGNAL <= decoder_output_mem_vis_signal;
+                if (decoder_output_vector_l_s_type == `MASK) begin
+                    ID_EXE_MEM_VIS_DATA_SIZE <= `ONE_BIT;
+                end
+                else begin
+                    ID_EXE_MEM_VIS_DATA_SIZE <= decoder_output_data_size;
+                end
+                ID_EXE_BRANCH_SIGNAL <= decoder_output_branch_signal;
+                ID_EXE_WB_SIGNAL     <= decoder_output_wb_signal;
                 
                 EXE_STATE_CTR <= 1;
             end

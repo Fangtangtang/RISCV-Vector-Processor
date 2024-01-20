@@ -155,7 +155,7 @@ module DECODER#(parameter ADDR_WIDTH = 20,
                                 vector_l_s_type = `WHOLE_REG;
                             end
                             `E_MASK:begin
-                                vector_l_s_type = `MASK;
+                                vector_l_s_type = `MASK; // load as mask
                             end
                             default:
                             $display("[ERROR]:unexpected lumop in VL instruction\n");
@@ -192,7 +192,7 @@ module DECODER#(parameter ADDR_WIDTH = 20,
                                 vector_l_s_type = `WHOLE_REG;
                             end
                             `E_MASK:begin
-                                vector_l_s_type = `MASK;
+                                vector_l_s_type = `MASK; // store as mask
                             end
                             default:
                             $display("[ERROR]:unexpected lumop in VS instruction\n");
