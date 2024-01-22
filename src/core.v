@@ -60,10 +60,12 @@ module CORE#(parameter ADDR_WIDTH = 20,
     // Control and Status Register
     
     // vl:vector length
-    reg [31:0] VL     = 0;
-    localparam  VLMAX = VECTOR_SIZE; // todo:暂时使用，不严格
+    reg [31:0] VL = 0;
+    // VLMAX = LMUL*VLEN/SEW
+    // localparam  VLMAX = VECTOR_SIZE; // todo:暂时使用，不严格
     
     // vlenb:`VLEN`/8 (vector register length in bytes), read only
+    reg [31:0] VLEN  = DATA_LEN*VECTOR_SIZE;
     reg [31:0] VLENB = DATA_LEN*VECTOR_SIZE/BYTE_SIZE;
     
     // vtype:vector data type register
@@ -71,8 +73,8 @@ module CORE#(parameter ADDR_WIDTH = 20,
     // vsew[2:0]:Selected element width (SEW) setting
     wire [2:0] VSEW = VTYPE[5:3];
     // vlmul[2:0].:vector register group multiplier (LMUL) setting
-    wire [2:0] VLMUL = VTYPE[2:0];
-    wire VMA         = VTYPE[7];
+    wire signed [2:0] VLMUL = VTYPE[2:0];
+    wire VMA                = VTYPE[7];
     
     // Transfer Register
     
@@ -469,8 +471,14 @@ module CORE#(parameter ADDR_WIDTH = 20,
                         VL        <= scalar_rf_rs1_data[31:0]; // todo: longer VL?
                     end
                     else if (!MEM_WB_RD_INDEX == 0) begin
-                        ID_EXE_VL <= VLMAX;
-                        VL        <= VLMAX; // todo: longer VL?
+                        if (VLMUL<0) begin
+                            ID_EXE_VL <= (VLENB>>VSEW)>>(-VLMUL);
+                            VL        <= (VLENB>>VSEW)>>(-VLMUL);
+                        end
+                        else begin
+                            ID_EXE_VL <= (VLENB>>VSEW)<<(VLMUL);
+                            VL        <= (VLENB>>VSEW)<<(VLMUL);
+                        end
                     end
                     else begin
                         ID_EXE_VL <= VL;
