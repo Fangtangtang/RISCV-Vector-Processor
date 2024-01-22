@@ -183,6 +183,26 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 20,
                     endcase
                 end
             end
+            `V_MOVE:begin
+                case (ext_type[4:2])
+                    `SEG_1:begin
+                        opcode = `VECTOR_MOVE1;
+                    end
+                    `SEG_2:begin
+                        opcode = `VECTOR_MOVE2;
+                    end
+                    `SEG_4:begin
+                        opcode = `VECTOR_MOVE4;
+                    end
+                    `SEG_8:begin
+                        opcode = `VECTOR_MOVE8;
+                    end
+                    default:
+                    $display("[ERROR]:unexpected sext type in vector function unit\n");
+                endcase
+                vsew       = VSEW;
+                is_mask_op = `FALSE;
+            end
             default:
             $display("[ERROR]:unexpected funct6 in vector function unit\n");
         endcase
@@ -245,12 +265,14 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 20,
     end
     endgenerate
     
+    wire is_move         = (opcode == `VECTOR_MOVE1)||(opcode == `VECTOR_MOVE2)||(opcode == `VECTOR_MOVE4)||(opcode == `VECTOR_MOVE8);
+    wire dispatch_needed = !(vec_operand_type == `NOT_VEC_ARITH||is_move)&&length > 0;
     // Dispatcher
     always @(posedge clk) begin
         case (working_status)
             `VEC_ALU_NOP:begin
                 if (execute) begin
-                    if (!(vec_operand_type == `NOT_VEC_ARITH)&&length > 0) begin
+                    if (dispatch_needed) begin
                         previous_vsew     <= VSEW;
                         masked            <= vm;
                         vector_length     <= length;
@@ -266,6 +288,15 @@ module VECTOR_FUNCTION_UNIT#(parameter ADDR_WIDTH = 20,
                         is_mask_operation <= is_mask_op;
                         current_vsew      <= vsew;
                         working_status    <= `VEC_ALU_WORKING;
+                    end
+                    else if (is_move) begin
+                        case (opcode)
+                            `VECTOR_MOVE1: begin
+                                alu_result <= vs2;
+                            end
+                        endcase
+                        next           <= 0;
+                        working_status <= `VEC_ALU_FINISHED;
                     end
                     else begin
                         next           <= 0;

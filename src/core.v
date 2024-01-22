@@ -62,7 +62,6 @@ module CORE#(parameter ADDR_WIDTH = 20,
     // vl:vector length
     reg [31:0] VL = 0;
     // VLMAX = LMUL*VLEN/SEW
-    // localparam  VLMAX = VECTOR_SIZE; // todo:暂时使用，不严格
     
     // vlenb:`VLEN`/8 (vector register length in bytes), read only
     reg [31:0] VLEN  = DATA_LEN*VECTOR_SIZE;
@@ -175,10 +174,9 @@ module CORE#(parameter ADDR_WIDTH = 20,
     assign vm                    = EXE_MEM_VM;
     assign mask                  = EXE_MEM_MASK;
     assign mem_write_vector_data = EXE_MEM_VS3;
-    assign vector_length         = EXE_MEM_VL;
+    assign vector_length         = (EXE_MEM_MEM_VIS_DATA_SIZE == `WHOLE_VEC)? (VLENB/8):EXE_MEM_VL;
     assign is_vector             = EXE_MEM_IS_VEC_INST;
-    assign data_type             = (EXE_MEM_MEM_VIS_DATA_SIZE == `ONE_BIT)?EXE_MEM_MEM_VIS_DATA_SIZE: EXE_MEM_IS_VEC_INST? EXE_MEM_VSEW : EXE_MEM_MEM_VIS_DATA_SIZE;
-    
+    assign data_type             = (EXE_MEM_MEM_VIS_DATA_SIZE == `WHOLE_VEC)? `EIGHT_BYTE:EXE_MEM_MEM_VIS_DATA_SIZE;
     
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // PIPELINE
@@ -497,17 +495,12 @@ module CORE#(parameter ADDR_WIDTH = 20,
                 ID_EXE_EXT_TYPE         <= decoder_reg1_index;
                 ID_EXE_FUNCT6           <= decoder_output_func6;
                 
-                ID_EXE_IS_VEC_INST    <= decoder_is_vector_instruction;
-                ID_EXE_ALU_SIGNAL     <= decoder_output_exe_signal;
-                ID_EXE_MEM_VIS_SIGNAL <= decoder_output_mem_vis_signal;
-                if (decoder_output_vector_l_s_type == `MASK) begin
-                    ID_EXE_MEM_VIS_DATA_SIZE <= `ONE_BIT;
-                end
-                else begin
-                    ID_EXE_MEM_VIS_DATA_SIZE <= decoder_output_data_size;
-                end
-                ID_EXE_BRANCH_SIGNAL <= decoder_output_branch_signal;
-                ID_EXE_WB_SIGNAL     <= decoder_output_wb_signal;
+                ID_EXE_IS_VEC_INST       <= decoder_is_vector_instruction;
+                ID_EXE_ALU_SIGNAL        <= decoder_output_exe_signal;
+                ID_EXE_MEM_VIS_SIGNAL    <= decoder_output_mem_vis_signal;
+                ID_EXE_MEM_VIS_DATA_SIZE <= decoder_output_data_size;
+                ID_EXE_BRANCH_SIGNAL     <= decoder_output_branch_signal;
+                ID_EXE_WB_SIGNAL         <= decoder_output_wb_signal;
                 
                 EXE_STATE_CTR <= 1;
             end
@@ -521,15 +514,18 @@ module CORE#(parameter ADDR_WIDTH = 20,
     // - alu执行运算
     // scalar 和 vector运行需要时间的差距
     // ---------------------------------------------------------------------------------------------
+    reg waiting_for_alu = 0;
+    
     always @(posedge clk) begin
         if ((!rst)&&rdy_in&&start_cpu)begin
             // 所有向量计算完成
-            if (vector_function_unit_vector_alu_status == `VEC_ALU_FINISHED) begin
+            if (waiting_for_alu&&vector_function_unit_vector_alu_status == `VEC_ALU_FINISHED) begin
                 // 记录结果
                 EXE_MEM_VECTOR_RESULT <= vector_function_unit_result;
                 EXE_MEM_OP_ON_MASK    <= vector_function_unit_is_mask;
                 
-                MEM_STATE_CTR <= 1;
+                waiting_for_alu <= 0;
+                MEM_STATE_CTR   <= 1;
             end
             else begin
                 MEM_STATE_CTR <= 0;
@@ -557,7 +553,7 @@ module CORE#(parameter ADDR_WIDTH = 20,
                 MEM_STATE_CTR <= 1;
             end
             else begin
-                // 要做向量运算
+                // 向量指令，不做向量运算
                 if (EXE_STATE_CTR&&ID_EXE_VEC_OPERAND_TYPE == `NOT_VEC_ARITH) begin
                     EXE_MEM_PC <= ID_EXE_PC;
                     
@@ -584,6 +580,7 @@ module CORE#(parameter ADDR_WIDTH = 20,
                     MEM_STATE_CTR <= 1;
                 end
                 else begin
+                    // 要做向量运算
                     if (EXE_STATE_CTR&&vector_function_unit_vector_alu_status == `VEC_ALU_NOP) begin
                         // 更新transfer register
                         EXE_MEM_PC <= ID_EXE_PC;
@@ -603,6 +600,8 @@ module CORE#(parameter ADDR_WIDTH = 20,
                         EXE_MEM_MEM_VIS_DATA_SIZE <= ID_EXE_MEM_VIS_DATA_SIZE;
                         EXE_MEM_BRANCH_SIGNAL     <= ID_EXE_BRANCH_SIGNAL;
                         EXE_MEM_WB_SIGNAL         <= ID_EXE_WB_SIGNAL;
+                        
+                        waiting_for_alu <= 1;
                     end
                 end
             end

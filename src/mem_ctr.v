@@ -92,8 +92,8 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 20,
                 written_data1 = {_written_vector_data_slices[(current_length<<2)+3],_written_vector_data_slices[(current_length<<2)+2],_written_vector_data_slices[(current_length<<2)+1],_written_vector_data_slices[(current_length<<2)]};
             end
             `EIGHT_BYTE:begin
-                written_data2 = {_written_vector_data_slices[(current_length<<4)+7],_written_vector_data_slices[(current_length<<4)+6],_written_vector_data_slices[(current_length<<4)+5],_written_vector_data_slices[(current_length<<4)+4]};
-                written_data1 = {_written_vector_data_slices[(current_length<<4)+3],_written_vector_data_slices[(current_length<<4)+2],_written_vector_data_slices[(current_length<<4)+1],_written_vector_data_slices[(current_length<<4)]};
+                written_data2 = {_written_vector_data_slices[(current_length<<3)+7],_written_vector_data_slices[(current_length<<3)+6],_written_vector_data_slices[(current_length<<3)+5],_written_vector_data_slices[(current_length<<3)+4]};
+                written_data1 = {_written_vector_data_slices[(current_length<<3)+3],_written_vector_data_slices[(current_length<<3)+2],_written_vector_data_slices[(current_length<<3)+1],_written_vector_data_slices[(current_length<<3)]};
             end
             default:
             $display("[ERROR]:unexpected requested_data_type in mem ctr\n");
@@ -210,12 +210,12 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 20,
                         `MEM_CTR_LOAD:begin
                             current_addr <= current_addr+4;
                             if (visit_vector) begin
-                                load_vector_data_slices[((current_length)<<4)]   <= mem_data[7:0];
-                                load_vector_data_slices[((current_length)<<4)+1] <= mem_data[15:8];
-                                load_vector_data_slices[((current_length)<<4)+2] <= mem_data[23:16];
-                                load_vector_data_slices[((current_length)<<4)+3] <= mem_data[31:24];
-                                CNT                                              <= 1;
-                                cache_vis_signal                                 <= `D_CACHE_LOAD;
+                                load_vector_data_slices[(current_length<<3)]   <= mem_data[7:0];
+                                load_vector_data_slices[(current_length<<3)+1] <= mem_data[15:8];
+                                load_vector_data_slices[(current_length<<3)+2] <= mem_data[23:16];
+                                load_vector_data_slices[(current_length<<3)+3] <= mem_data[31:24];
+                                CNT                                            <= 1;
+                                cache_vis_signal                               <= `D_CACHE_LOAD;
                             end
                             else begin
                                 scalar_data[DATA_LEN-1:0] <= mem_data;
@@ -274,11 +274,11 @@ module MEMORY_CONTROLLER#(parameter ADDR_WIDTH = 20,
                                         current_addr                                     <= current_addr+4;
                                     end
                                     `EIGHT_BYTE:begin
-                                        load_vector_data_slices[((current_length)<<4)+4] <= mem_data[7:0];
-                                        load_vector_data_slices[((current_length)<<4)+5] <= mem_data[15:8];
-                                        load_vector_data_slices[((current_length)<<4)+6] <= mem_data[23:16];
-                                        load_vector_data_slices[((current_length)<<4)+7] <= mem_data[31:24];
-                                        current_addr                                     <= current_addr+4;
+                                        load_vector_data_slices[(current_length<<3)+4] <= mem_data[7:0];
+                                        load_vector_data_slices[(current_length<<3)+5] <= mem_data[15:8];
+                                        load_vector_data_slices[(current_length<<3)+6] <= mem_data[23:16];
+                                        load_vector_data_slices[(current_length<<3)+7] <= mem_data[31:24];
+                                        current_addr                                   <= current_addr+4;
                                     end
                                     default:
                                     $display("[ERROR]:unexpected requested_data_type in mem ctr\n");

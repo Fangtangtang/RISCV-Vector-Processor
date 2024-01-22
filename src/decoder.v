@@ -131,31 +131,33 @@ module DECODER#(parameter ADDR_WIDTH = 20,
                         exe_signal       = `VEC_MEM_ADDR;
                         vec_operand_type = `NOT_VEC_ARITH;
                         mem_vis_signal   = `MEM_CTR_LOAD;
-                        case (func3)
-                            3'b000:begin
-                                data_size = `ONE_BYTE;
-                            end
-                            3'b101:begin
-                                data_size = `TWO_BYTE;
-                            end
-                            3'b110:begin
-                                data_size = `FOUR_BYTE;
-                            end
-                            3'b111:begin
-                                data_size = `EIGHT_BYTE;
-                            end
-                            default:
-                            $display("[ERROR]:unexpected data width in VL instruction\n");
-                        endcase
                         case (instruction[24:20])
                             `E_BASIC:begin
                                 vector_l_s_type = `STRIDE;
+                                case (func3)
+                                    3'b000:begin
+                                        data_size = `ONE_BYTE;
+                                    end
+                                    3'b101:begin
+                                        data_size = `TWO_BYTE;
+                                    end
+                                    3'b110:begin
+                                        data_size = `FOUR_BYTE;
+                                    end
+                                    3'b111:begin
+                                        data_size = `EIGHT_BYTE;
+                                    end
+                                    default:
+                                    $display("[ERROR]:unexpected data width in VL instruction\n");
+                                endcase
                             end
                             `E_WHOLE_REG:begin
                                 vector_l_s_type = `WHOLE_REG;
+                                data_size       = `WHOLE_VEC;
                             end
                             `E_MASK:begin
                                 vector_l_s_type = `MASK; // load as mask
+                                data_size       = `ONE_BIT;
                             end
                             default:
                             $display("[ERROR]:unexpected lumop in VL instruction\n");
@@ -168,31 +170,33 @@ module DECODER#(parameter ADDR_WIDTH = 20,
                         exe_signal       = `VEC_MEM_ADDR;
                         vec_operand_type = `NOT_VEC_ARITH;
                         mem_vis_signal   = `MEM_CTR_STORE;
-                        case (func3)
-                            3'b000:begin
-                                data_size = `ONE_BYTE;
-                            end
-                            3'b101:begin
-                                data_size = `TWO_BYTE;
-                            end
-                            3'b110:begin
-                                data_size = `FOUR_BYTE;
-                            end
-                            3'b111:begin
-                                data_size = `EIGHT_BYTE;
-                            end
-                            default:
-                            $display("[ERROR]:unexpected data width in VS instruction\n");
-                        endcase
                         case (instruction[24:20])
                             `E_BASIC:begin
                                 vector_l_s_type = `STRIDE;
+                                case (func3)
+                                    3'b000:begin
+                                        data_size = `ONE_BYTE;
+                                    end
+                                    3'b101:begin
+                                        data_size = `TWO_BYTE;
+                                    end
+                                    3'b110:begin
+                                        data_size = `FOUR_BYTE;
+                                    end
+                                    3'b111:begin
+                                        data_size = `EIGHT_BYTE;
+                                    end
+                                    default:
+                                    $display("[ERROR]:unexpected data width in VS instruction\n");
+                                endcase
                             end
                             `E_WHOLE_REG:begin
                                 vector_l_s_type = `WHOLE_REG;
+                                data_size       = `WHOLE_VEC;
                             end
                             `E_MASK:begin
                                 vector_l_s_type = `MASK; // store as mask
+                                data_size       = `ONE_BIT;
                             end
                             default:
                             $display("[ERROR]:unexpected lumop in VS instruction\n");

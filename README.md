@@ -372,6 +372,22 @@ LMUL=2^(vlmul[2:0])
  m4     # LMUL=4
  m8     # LMUL=8
 ```
+#### Whole Vector Register Move
+```
+vmv1r.v v1, v2 		# Copy v1=v2
+vmv2r.v v10, v12 	# Copy v10=v12; v11=v13
+vmv4r.v v4, v8 		# Copy v4=v8; v5=v9; v6=v10; v7=v11
+```
+
+```
+31 29 28 27 26 25 24           20 19    17   15 14 12 11          7 6       0
++----+---+---+---+---------------+--------+----+-----+-------------+---------+
+|    100111  | vm|     vs2       |  nf-1  | 00 | 011 |     vd      | 1010111 | 
+
+```
+
+nf：number of fields per section（类似grouping数？）。value of NREG must be 1, 2, 4, or 8, and values of simm[4:0] other than 0, 1, 3, and 7 are reserved.
+
 ### 特权
 
 #### CSR

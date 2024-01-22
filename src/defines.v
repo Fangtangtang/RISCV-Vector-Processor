@@ -33,6 +33,7 @@
 
 `define     NOT_ACCESS          3'b100
 
+`define     WHOLE_VEC           3'b110
 `define     ONE_BIT             3'b111
 
 // - VLMUL    [2:0]
@@ -167,6 +168,10 @@
 `define     VECTOR_SEXT4                 6'b010000
 `define     VECTOR_ZEXT8                 6'b010001
 `define     VECTOR_SEXT8                 6'b010010
+`define     VECTOR_MOVE1                 6'b010011
+`define     VECTOR_MOVE2                 6'b010100
+`define     VECTOR_MOVE4                 6'b010101
+`define     VECTOR_MOVE8                 6'b010110
 
 // DECODE
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -266,9 +271,12 @@
 `define     V_MACC                  6'b101101
 `define     V_NMSAC                 6'b101111
 `define     V_MADD                  6'b101001
+`define     V_MOVE                  6'b100111
+
 
 `define     V_ZEXT                  6'b010010 // in need of funct3, vs1 to determine
 `define     V_SEXT                  6'b010010
+
 
 // ext type
 // (vs1[4:0])
@@ -278,6 +286,14 @@
 `define     SEXT4                  5'b00101
 `define     ZEXT8                  5'b00010
 `define     SEXT8                  5'b00011
+
+// move section 
+// (vs1[4:2])
+`define     SEG_1                  3'b000
+`define     SEG_2                  3'b001
+`define     SEG_4                  3'b011
+`define     SEG_8                  3'b111
+
 
 // CSR Read/Write Encoding
 // ----------------------------------------------------------
