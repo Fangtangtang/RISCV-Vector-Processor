@@ -86,7 +86,7 @@ module VECTOR_REGISTER_FILE#(parameter ADDR_WIDTH = 17,
     wire [VECTOR_SIZE*DATA_LEN - 1:0] reg29Value = register[29];
     wire [VECTOR_SIZE*DATA_LEN - 1:0] reg30Value = register[30];
     wire [VECTOR_SIZE*DATA_LEN - 1:0] reg31Value = register[31];
-  
+    
     always @(posedge clk) begin
         if ((!rst)&&rdy_in)begin
             // 读
@@ -124,6 +124,13 @@ module VECTOR_REGISTER_FILE#(parameter ADDR_WIDTH = 17,
                                     register[rd][(i+1)*64-1 -: 64] <= data[(i+1)*64-1 -: 64];
                                 end
                             end
+                        end
+                        `WHOLE_VEC:begin
+                            // 整个，不考虑mask
+                            register[rd] <= data;
+                        end
+                        `ONE_BIT:begin
+                            register[rd] <= data;
                         end
                         default:
                         $display("[ERROR]:unexpected data type in vector rf\n");

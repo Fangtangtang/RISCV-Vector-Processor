@@ -159,6 +159,7 @@ module CORE#(parameter ADDR_WIDTH = 20,
     
     reg                         MEM_WB_IS_VEC_INST;
     reg                         MEM_WB_OP_ON_MASK;            // 是对mask的操作
+    reg [2:0]                   MEM_WB_MEM_VIS_DATA_SIZE;
     reg [2:0]                   MEM_WB_WB_SIGNAL;
     
     // MEM VISIT
@@ -284,9 +285,11 @@ module CORE#(parameter ADDR_WIDTH = 20,
     wire [1:0]                      vector_rf_rf_signal;
     reg [VECTOR_SIZE*DATA_LEN-1:0]  vector_rf_reg_write_data;
     wire                            vector_rf_write_back_enabled;
+    wire [2:0]                      vector_rf_data_size;
     
     assign  vector_rf_rf_signal          = (WB_STATE_CTR&&vector_rb_flag)? `VECTOR_RF_WRITE:`RF_NOP;
     assign  vector_rf_write_back_enabled = WB_STATE_CTR;
+    assign  vector_rf_data_size          = (MEM_WB_WB_SIGNAL == `VECTOR_ARITH)? MEM_WB_VSEW:MEM_WB_MEM_VIS_DATA_SIZE;
     
     // outports wire
     wire [VECTOR_SIZE*DATA_LEN-1:0] 	vector_rf_v0_data;
@@ -316,7 +319,7 @@ module CORE#(parameter ADDR_WIDTH = 20,
     .mask               	(MEM_WB_MASK),
     .data               	(vector_rf_reg_write_data),
     .length             	(MEM_WB_VL),
-    .data_type          	(MEM_WB_VSEW),
+    .data_type          	(vector_rf_data_size),
     .write_back_enabled 	(vector_rf_write_back_enabled),
     .v0_data            	(vector_rf_v0_data),
     .rs1_data           	(vector_rf_rs1_data),
@@ -687,8 +690,9 @@ module CORE#(parameter ADDR_WIDTH = 20,
                     
                     MEM_WB_RD_INDEX <= EXE_MEM_RD_INDEX;
                     
-                    MEM_WB_IS_VEC_INST <= EXE_MEM_IS_VEC_INST;
-                    MEM_WB_WB_SIGNAL   <= EXE_MEM_WB_SIGNAL;
+                    MEM_WB_IS_VEC_INST       <= EXE_MEM_IS_VEC_INST;
+                    MEM_WB_MEM_VIS_DATA_SIZE <= EXE_MEM_MEM_VIS_DATA_SIZE;
+                    MEM_WB_WB_SIGNAL         <= EXE_MEM_WB_SIGNAL;
                     
                     if (EXE_MEM_IS_VEC_INST) begin
                         // 向量load/store
