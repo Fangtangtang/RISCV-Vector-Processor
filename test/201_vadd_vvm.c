@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 void vec_add_rvv(vbool32_t *mask,vint32m1_t *maskedoff,vint32m1_t *a, vint32m1_t *b, vint32m1_t *c, size_t vl) {
-    *c = vadd_vv_i32m1_m(*mask,*maskedoff,*a, *b, vl);//vadd_vv_i8m1_m
+    *c = vadd_vv_i32m1_m(*mask,*maskedoff,*a, *b, vl);
 }
 
 int main() {
@@ -17,7 +17,7 @@ int main() {
     int b[4]={5,6,7,8};
     int m[4]={1,1,1,1}; // 当前位未激活时取值
     uint8_t ma[4] = {1,0,1,0};
-    // vbool8_t vlm_v_b8
+
     vint32m1_t va = vle32_v_i32m1(a, vl);
     vint32m1_t vb = vle32_v_i32m1(b, vl);
     vint32m1_t maskedoff = vle32_v_i32m1(m, vl);

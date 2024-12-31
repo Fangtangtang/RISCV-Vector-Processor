@@ -281,7 +281,7 @@ Vector memory unit-stride and constant-stride operations directly encode EEW(ele
 
 ### Basic unit-stride vector addressing modes
 
-Vector **unit-stride** operations access elements stored contiguously in memory starting from the base effective address. 
+Vector **unit-stride** operations access elements stored contiguously in memory starting from the base effective address. 按指定数据类型连续取，放到vd。
 
 Vector **constant-strided** operations access the first memory element at the base effective address, and then access subsequent elements at address increments given by the byte offset contained in the x register specified by rs2. 以地址增量访问后续元素，地址增量由 rs2 指定的 x 寄存器中包含的字节偏移量给出。（可以以固定步长跳？）
 
